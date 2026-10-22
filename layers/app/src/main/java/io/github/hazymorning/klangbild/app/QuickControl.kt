@@ -25,6 +25,10 @@ import kotlinx.coroutines.launch
  * The quick settings while they are open (down on the remote): which entry the cursor is on,
  * and what OK does to it. While they are open, the landscape stays as it was unless they
  * change it. Untouched, they close after [IDLE_MS].
+ *
+ * In the player's grid two of them, the song's words and the way into the settings, stand on
+ * the stage as buttons all the time. Down chooses among those first ([compact]); down again
+ * opens the whole row.
  */
 internal class QuickControl(private val host: ControllerHost) {
     /** The entry the cursor is on, by what it is, so entries coming and going never move it. */
@@ -63,13 +67,23 @@ internal class QuickControl(private val host: ControllerHost) {
     @Volatile private var partyUrl: String? = null
     private var partyJob: Job? = null
 
+    /** Only the player's buttons are open, not the whole row. */
+    @Volatile private var compact = false
+
     val isOpen: Boolean get() = cursor != null
 
-    /** Opens the quick settings on the queue's entry. Once opened, the stage no longer tells how. */
-    fun open(menuOpen: Boolean) {
+    /** The player's buttons are open (not the whole row): down again opens the row. */
+    val isCompact: Boolean get() = cursor != null && compact
+
+    /**
+     * Opens the quick settings on the queue's entry, or with [buttons] the player's buttons on
+     * the first of them. Once opened, the stage no longer tells how.
+     */
+    fun open(menuOpen: Boolean, buttons: Boolean = false) {
         synchronized(host.lock) {
             if (menuOpen || cursor != null) return
-            cursor = QuickKey(QuickItem.QUEUE)
+            compact = buttons
+            cursor = if (buttons) rows().first().key else QuickKey(QuickItem.QUEUE)
             touchedAt = host.now()
             hold = host.ui.landscape != null
             host.recompute()
@@ -82,9 +96,20 @@ internal class QuickControl(private val host: ControllerHost) {
         applyQueue()
         synchronized(host.lock) {
             cursor = null
+            compact = false
             hold = null
         }
         host.recompute()
+    }
+
+    /** From the player's buttons to the whole row (down again), the cursor staying on its entry. */
+    fun expand() {
+        synchronized(host.lock) {
+            if (cursor == null || !compact) return
+            compact = false
+            touchedAt = host.now()
+            host.recompute()
+        }
     }
 
     /** A key in the quick settings that changes nothing: they stay open a while longer. */
@@ -152,6 +177,7 @@ internal class QuickControl(private val host: ControllerHost) {
     fun expire(t: Long, menuOpen: Boolean) {
         if (cursor != null && (t - touchedAt > IDLE_MS || menuOpen)) {
             cursor = null
+            compact = false
             hold = null
             if (pendingQueue != null) host.scope.launch { applyQueue() }
         }
@@ -175,7 +201,18 @@ internal class QuickControl(private val host: ControllerHost) {
         landscapeChosen = landscape
         val c = cursor ?: return null
         val rows = rows(context(screen, landscape))
-        return QuickState(rows, indexOf(rows.map { it.key }, c))
+        return QuickState(rows, indexOf(rows.map { it.key }, c), compact)
+    }
+
+    /**
+     * The player's buttons as they stand on [screen]: the song's words (while they can be chosen)
+     * and the way into the settings, the one the cursor is on chosen while they are open, none
+     * otherwise (called under the lock).
+     */
+    fun buttons(screen: Screen, landscape: Boolean): QuickState {
+        val rows = rows(context(screen, landscape), compact = true)
+        val c = cursor?.takeIf { compact }
+        return QuickState(rows, if (c == null) -1 else indexOf(rows.map { it.key }, c), compact = true)
     }
 
     /**
@@ -429,7 +466,8 @@ internal class QuickControl(private val host: ControllerHost) {
         )
     }
 
-    private fun rows(ctx: QuickContext = context()): List<QuickRow> = QuickMenu.rows(host.settings, ctx, host.texts)
+    private fun rows(ctx: QuickContext = context(), compact: Boolean = this.compact): List<QuickRow> =
+        QuickMenu.rows(host.settings, ctx, host.texts).let { all -> if (compact) all.filter { it.item in QuickMenu.PLAYER_BUTTONS } else all }
 
     /**
      * Where [key] stands among [keys]; once it is gone (the favorite when the music stops), the

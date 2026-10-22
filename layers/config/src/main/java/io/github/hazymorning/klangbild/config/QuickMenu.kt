@@ -111,6 +111,9 @@ data class QuickContext(
  * last. The sleep timer lives in the settings.
  */
 object QuickMenu {
+    /** The quick settings that stand on the stage as buttons in the player's grid. */
+    val PLAYER_BUTTONS = setOf(QuickItem.LYRICS, QuickItem.SETTINGS)
+
     fun rows(s: Settings, ctx: QuickContext, t: Texts): List<QuickRow> = buildList {
         fun row(item: QuickItem, value: String, muted: Boolean = false) = add(QuickRow(QuickKey(item), t[item.label!!], value, values(item, t), muted))
         row(QuickItem.QUEUE, SettingsMenu.queueValue(ctx.pending ?: s.queue, t))
