@@ -52,6 +52,8 @@ the TV, and a QR code sets it up from your phone.
 - 🌙 A sleep timer that can wait for the end of the chapter
 - 📱 Setup on your phone through a QR code, with Home Assistant's own sign-in
 
+![The same song twice, on the light background by day and on the dark one at night](docs/screenshots/day-and-night.jpg)
+
 ## Requirements
 
 | Requirement | Why |
@@ -78,6 +80,10 @@ the TV, and a QR code sets it up from your phone.
 > from its own integration and once from Music Assistant. Choose the one marked Music Assistant,
 > since only that one brings the lyrics and everything else Music Assistant knows about the song.
 
+<details>
+<summary><b>Open Encore when the music starts (optional)</b></summary>
+<br>
+
 If the TV is connected to Home Assistant through the
 [Android Debug Bridge integration](https://www.home-assistant.io/integrations/androidtv/), an
 automation like this one opens Encore whenever your speaker starts playing. The two entity IDs are
@@ -96,14 +102,14 @@ actions:
       source: io.github.vednolacni.encore
 ```
 
-## Day and night
+</details>
 
-During the day the background is light, and after sunset it turns dark, so the screen fits the
-room at every hour. In the settings you can also keep one of them for good.
+## More
 
-![The same song twice, on the light background by day and on the dark one at night](docs/screenshots/day-and-night.jpg)
-
-## Devices
+<a name="devices"></a>
+<details>
+<summary><b>Devices</b></summary>
+<br>
 
 Encore runs on TVs and boxes with Android TV 9 or later. Since the TV can stay on for hours, the
 whole picture drifts slowly by a few pixels, which helps keep an OLED screen from burning in.
@@ -113,7 +119,12 @@ Encore installs on a streaming stick that runs it. Fire OS 7 and later are built
 newer, which should be enough. Vega OS isn't Android at all, so Android apps most likely won't
 install there.
 
-## Remote
+</details>
+
+<a name="remote"></a>
+<details>
+<summary><b>TV remote</b></summary>
+<br>
 
 | Button | Action |
 | --- | --- |
@@ -125,24 +136,40 @@ install there.
 In the settings you can change what some of the buttons do, for example to have up and down
 change the volume.
 
-## Sendspin
+</details>
+
+<a name="sendspin"></a>
+<details>
+<summary><b>Sendspin</b></summary>
+<br>
 
 With Music Assistant 2.10.7 or later, the TV can become one of its speakers and play in time with
 the others over Sendspin. Once "Play here" is on, under System in the settings or with the box on
 the setup page, it shows up in Music Assistant under its own name and keeps playing even while
 Encore is closed.
 
-## Privacy
+</details>
+
+<a name="privacy"></a>
+<details>
+<summary><b>Data privacy</b></summary>
+<br>
 
 Encore has no accounts and doesn't track you. Your logins for Home Assistant and Music Assistant
 are stored encrypted on the TV and never go anywhere but your own servers.
 
-## Support
+</details>
+
+<details>
+<summary><b>Support</b></summary>
+<br>
 
 - [Ideas and questions](https://github.com/vednolacni/encore/discussions), always welcome
 - [Report a bug](https://github.com/vednolacni/encore/issues)
 - [Music Assistant documentation](https://www.music-assistant.io)
 - [Android Debug Bridge, Home Assistant documentation](https://www.home-assistant.io/integrations/androidtv/)
+
+</details>
 
 ## Credits
 
