@@ -102,7 +102,7 @@ data class DisplayOptions(
     /** The values of one's own from Home Assistant, after the clock. */
     val values: Boolean = true,
     val intensity: Intensity = Intensity.NORMAL,
-    val background: BackgroundMode = BackgroundMode.WALL,
+    val background: BackgroundMode = BackgroundMode.COVER,
     val motion: MotionLevel = MotionLevel.OFF,
 )
 
@@ -141,7 +141,8 @@ data class Settings(
     val maToken: String? = null,
     /** This TV plays music from Music Assistant, as one of its speakers (needs Music Assistant). */
     val tvSpeaker: Boolean = false,
-    val background: BackgroundMode = BackgroundMode.WALL,
+    /** The cover's own colors behind the picture, as a sing-along screen has them, unless the plain wall is chosen. */
+    val background: BackgroundMode = BackgroundMode.COVER,
     val motion: MotionLevel = MotionLevel.OFF,
     /** The color lights behind the TV and how brightly they join in (by day; at night they dim on their own). */
     val roomLights: RoomLights = RoomLights(),

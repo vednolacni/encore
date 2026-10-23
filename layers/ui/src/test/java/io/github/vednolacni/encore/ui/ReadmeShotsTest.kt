@@ -82,10 +82,10 @@ class ReadmeShotsTest {
 
     private fun coverLights(name: String, scene: ArtworkScene, warmth: Float) = lights(name, CoverLightColors(scene.field!!, moving = false), warmth)
 
-    /** The first picture: a song with its words at night on the dark wall, the room lit in its colors. */
+    /** The first picture: a song with its words at night on its own colors, the room lit in them. */
     @Test
     fun nowPlaying() {
-        val scene = Fixtures.scene(encore)
+        val scene = Fixtures.scene(encore, coverField = true)
         shot("now-playing") {
             Player(Fixtures.lyricsModel(encore, words, position = { 81_000L }, scene = scene, clock = en.clock(Fixtures.at(21, 47), Fixtures.zone), group = "Living room", t = en), LyricsChoice.ON)
         }
@@ -95,7 +95,7 @@ class ReadmeShotsTest {
     /** The first picture for a light page: the same song by day on the light wall (the lights are off by day). */
     @Test
     fun nowPlayingLight() {
-        val scene = Fixtures.scene(encore, appearance = Appearance.LIGHT)
+        val scene = Fixtures.scene(encore, appearance = Appearance.LIGHT, coverField = true)
         shot("now-playing-light") {
             Player(Fixtures.lyricsModel(encore, words, position = { 81_000L }, appearance = Appearance.LIGHT, scene = scene, clock = en.clock(Fixtures.at(14, 47), Fixtures.zone), group = "Living room", t = en), LyricsChoice.ON)
         }
@@ -104,11 +104,11 @@ class ReadmeShotsTest {
     /** One song twice: on the light wall by day and on the dark wall at night. */
     @Test
     fun dayAndNight() {
-        val day = Fixtures.scene(desertSong, appearance = Appearance.LIGHT)
+        val day = Fixtures.scene(desertSong, appearance = Appearance.LIGHT, coverField = true)
         shot("day") {
             Player(Fixtures.model(desertSong, next = polarNight, positionMs = 61_000L, clock = en.clock(Fixtures.at(14, 15), Fixtures.zone), group = "Living room", scene = day, t = en, appearance = Appearance.LIGHT), LyricsChoice.OFF)
         }
-        val night = Fixtures.scene(desertSong)
+        val night = Fixtures.scene(desertSong, coverField = true)
         shot("night") {
             Player(Fixtures.model(desertSong, next = polarNight, positionMs = 61_000L, clock = en.clock(Fixtures.at(22, 30), Fixtures.zone), group = "Living room", scene = night, t = en), LyricsChoice.OFF)
         }
