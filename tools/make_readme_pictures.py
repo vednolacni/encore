@@ -280,7 +280,7 @@ def dark_room(W, H, tv, colors, strength, albedo=(122, 118, 114), ambient=0.008,
 
 
 def logo_tile(side, ss=4):
-    """The whole logo, the white TV on its blue square, with round corners: its colors and its
+    """The whole logo, the TV on its square of sand, with round corners: its colors and its
     coverage."""
     tile = Image.new("L", (side * ss, side * ss), 0)
     ImageDraw.Draw(tile).rounded_rectangle([0, 0, side * ss - 1, side * ss - 1], radius=int(side * 0.24 * ss), fill=255)
@@ -354,8 +354,8 @@ def ink_width(mask):
 def download_button(scale=4, light=False):
     """The README's download button, built like a store badge: the logo on its tile, then "Download
     for" over "Android TV", the same space on every side, with a hairline edge. For a dark page it is
-    near black with pale words, the [light] one white with dark words. Its width follows what it
-    holds; the README shows it 236 px wide."""
+    espresso with pale words, the [light] one chalk with brown words. Its width follows what it
+    holds; the README shows it 236 px wide. Its colors are the logo's own family."""
     h = 64 * scale
     side = int(round(h * 0.60))                  # the logo
     pad = (h - side) // 2                        # the same space left of it as above and below
@@ -374,11 +374,11 @@ def download_button(scale=4, light=False):
     edge = np.asarray(edge.resize((w, h), Image.LANCZOS), dtype=np.float64) / 255.0
     img = np.empty((h, w, 3))
     if light:
-        img[:] = np.array([255, 255, 255], dtype=np.float64)
-        img = img * (1 - edge[..., None]) + np.array([208, 215, 222]) * edge[..., None]
+        img[:] = np.array([253, 251, 247], dtype=np.float64)          # chalk
+        img = img * (1 - edge[..., None]) + np.array([222, 211, 196]) * edge[..., None]
     else:
-        img[:] = np.array([22, 27, 34], dtype=np.float64)
-        img = img * (1 - edge[..., None]) + np.array([61, 68, 77]) * edge[..., None]
+        img[:] = np.array([43, 33, 26], dtype=np.float64)             # espresso
+        img = img * (1 - edge[..., None]) + np.array([74, 58, 48]) * edge[..., None]  # mocha
     mark, a = logo_tile(side)
     img[pad:pad + side, pad:pad + side] = img[pad:pad + side, pad:pad + side] * (1 - a) + mark[..., :3] * a
     # The two lines as one block centered on the button: the small line's cap height to the large line's baseline.
@@ -386,8 +386,8 @@ def download_button(scale=4, light=False):
     line_gap = 6.5 * scale
     y0 = h / 2 - (cap_small + line_gap + cap_large) / 2
     tx = pad + side + gap
-    paste(img, small, tx, int(round(y0)) - small_cap, (89, 99, 110) if light else (190, 198, 207))
-    paste(img, large, tx, int(round(y0 + cap_small + line_gap)) - large_cap, (22, 27, 34) if light else (240, 243, 247))
+    paste(img, small, tx, int(round(y0)) - small_cap, (107, 90, 76) if light else (214, 202, 186))
+    paste(img, large, tx, int(round(y0 + cap_small + line_gap)) - large_cap, (43, 33, 26) if light else (251, 248, 243))
     rgba = np.dstack([np.clip(img, 0, 255), shape * 255]).astype(np.uint8)
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, "download-light.png" if light else "download.png")
@@ -402,7 +402,7 @@ def download_buttons():
 
 def wide_logo(light=False, h=240):
     """The README's header: the logo on its tile beside the name, on transparency, as wide as the two
-    need. The name is near black for a light page and pale for a dark one; the tile stays the same
+    need. The name is espresso for a light page and pale for a dark one; the tile stays the same
     on both. The README shows it 420 px wide."""
     side = h
     mark, a = logo_tile(side)
@@ -418,7 +418,7 @@ def wide_logo(light=False, h=240):
     y = int(round(h / 2 - 0.70 * size / 2)) - cap_row
     cols = np.nonzero(name.max(axis=0) > 0.02)[0]
     x = side + gap - int(cols[0])
-    ink = np.array((22, 27, 34) if light else (240, 243, 247), dtype=np.float64)
+    ink = np.array((43, 33, 26) if light else (251, 248, 243), dtype=np.float64)
     region = alpha[y:y + name.shape[0], x:x + name.shape[1]]
     cover = name[: region.shape[0], : region.shape[1]]
     rgb[y:y + cover.shape[0], x:x + cover.shape[1]] = ink

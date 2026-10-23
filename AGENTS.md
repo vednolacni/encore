@@ -39,9 +39,10 @@ theme (`<picture>` with `prefers-color-scheme`). No mockup carries text of its o
 bugs: the issue form (`bug_report.yml`) says so kindly and sends ideas and questions to the
 Discussions.
 
-The logo is `tools/logo.svg` (a white TV with an antenna on a sky blue square, a sound wave of seven
-round bars cut out of its screen, in the manner of Music Assistant's own logo, as the owner asked,
-without its letters), drawn from it with CairoSVG by `tools/make_launcher_assets.py`
+The logo is `tools/logo.svg` (an espresso brown TV with an antenna on a square of warm sand, a sound
+wave of seven round bars cut out of its screen, in the manner of Music Assistant's own logo but
+without its letters, in colors the owner chose: sand #EDE5D9, espresso #2B211A, mocha #4A3A30,
+clay #6B5A4C, chalk #FDFBF7), drawn from it with CairoSVG by `tools/make_launcher_assets.py`
 for the banner, the icons and the button (and through it by `tools/make_readme_pictures.py` for
 the README's wide logo), never scaled from a bitmap; the notification icon
 (`ic_notification.xml`) is the same TV as a vector. Release notes are easy to scan and in everyday words: a small heading for each kind of

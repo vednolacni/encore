@@ -159,6 +159,6 @@ MIT, like Klangbild before it (see [LICENSE](LICENSE)).
 [tv-badge]: https://img.shields.io/badge/Android%20TV-9%2B-3DDC84.svg
 [ha-badge]: https://img.shields.io/badge/Home%20Assistant-media%20player-41BDF5.svg
 [ha-url]: https://www.home-assistant.io/integrations/media_player/
-[ma-badge]: https://img.shields.io/badge/Music%20Assistant-optional-F2A47C.svg
+[ma-badge]: https://img.shields.io/badge/Music%20Assistant-optional-6B5A4C.svg
 [ma-url]: https://www.music-assistant.io
 [license-badge]: https://img.shields.io/badge/License-MIT-green.svg

@@ -3,9 +3,9 @@
 
 Usage: python3 tools/make_launcher_assets.py   (needs Pillow and CairoSVG)
 
-The logo is tools/logo.svg: a white TV with an antenna on a sky blue square, a sound wave cut out
-of its screen, in the manner of Music Assistant's own logo. It is drawn here from the SVG at every
-size, never scaled from a bitmap.
+The logo is tools/logo.svg: an espresso brown TV with an antenna on a square of warm sand, a sound
+wave cut out of its screen, in the manner of Music Assistant's own logo.
+It is drawn here from the SVG at every size, never scaled from a bitmap.
 """
 import io
 import os
@@ -24,14 +24,14 @@ with open(LOGO, encoding="utf-8") as f:
 
 
 def _color(name):
-    """A color of the logo, by what it paints: the square's blue, or the TV's white."""
+    """A color of the logo, by what it paints: the square's sand, or the TV's brown."""
     pattern = r'<rect id="background"[^>]*fill="#(\w{6})"' if name == "background" else r'<path fill="#(\w{6})"'
     v = re.search(pattern, _SVG).group(1)
     return tuple(int(v[i:i + 2], 16) for i in (0, 2, 4))
 
 
-BLUE = _color("background")
-WHITE = _color("mark")
+SAND = _color("background")
+BROWN = _color("mark")
 # The SVG's square, and a square that holds just the TV with its antenna.
 FULL = 1024
 TIGHT = 560
@@ -39,7 +39,7 @@ TIGHT = 560
 
 def logo(size, background=True, extent=FULL):
     """The logo on a square of [size] px showing [extent] units of the 1024 unit SVG around its
-    middle; without its [background], the white TV alone on transparency."""
+    middle; without its [background], the TV alone on transparency."""
     svg = _SVG if background else re.sub(r'<rect id="background"[^>]*/>', "", _SVG)
     x = (FULL - extent) / 2
     svg = svg.replace('viewBox="0 0 1024 1024"', f'viewBox="{x} {x} {extent} {extent}"', 1)
@@ -58,9 +58,9 @@ def jost(size, weight=400):
 
 
 def banner(path, w=320, h=180):
-    """The TV beside the name in white on the logo's blue, both centered on the banner as a group."""
+    """The TV beside the name in the logo's brown on its sand, both centered on the banner as a group."""
     s = 4
-    img = Image.new("RGBA", (w * s, h * s), BLUE + (255,))
+    img = Image.new("RGBA", (w * s, h * s), SAND + (255,))
     side = int(h * s * 0.46)
     mark = logo(side, background=False, extent=TIGHT)
     size = 40 * s
@@ -75,14 +75,14 @@ def banner(path, w=320, h=180):
     ascent, _ = f.getmetrics()
     # The cap height (0.70 em) centered on the TV.
     cap = 0.70 * size
-    d.text((x0 + side + gap, int(h * s / 2 + cap / 2 - ascent)), text, font=f, fill=WHITE)
+    d.text((x0 + side + gap, int(h * s / 2 + cap / 2 - ascent)), text, font=f, fill=BROWN)
     img = img.convert("RGB").resize((w, h), Image.LANCZOS)
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path, optimize=True)
 
 
 def legacy_icon(path, size):
-    """The whole logo, the TV in the middle of its blue square."""
+    """The whole logo, the TV in the middle of its square of sand."""
     img = logo(size).convert("RGB")
     os.makedirs(os.path.dirname(path), exist_ok=True)
     img.save(path, optimize=True)
