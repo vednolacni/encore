@@ -25,11 +25,14 @@ is written like everything else (see the writing rules). A centered header holds
 shields badges (Android TV 9+ linking to `#devices`, Home Assistant, Music Assistant, License), a
 line on what it works with, the download button, a row of links to the sections (`&middot;`
 between them) and the first picture. Then a rule (`---`), three short paragraphs on what Encore
-does and where it comes from, `## Features` (one emoji opening each line), `## Requirements` (a
-table, Requirement and Why), `## Install` (numbered steps, the note on the speaker listed twice as
-GitHub's `> [!IMPORTANT]`, the optional automation), Day and night with its picture, Devices,
-Remote, Sendspin, Privacy, Support, Credits (Klangbild by hazymorning, then the owner's own line
-"Developed with the assistance of AI.") and License. No folds. The README's pictures are mockups
+does and where it comes from, `## Features` (one emoji opening each line, the day and night
+picture under them), `## Requirements` (a table, Requirement and Why), `## Install` (numbered
+steps, the note on the speaker listed twice as GitHub's `> [!IMPORTANT]`, the optional automation
+folded in a `<details>`). What matters less at first is folded away under `## More`, one line to
+click for each (Devices, TV remote, Sendspin, Data privacy, Support), so the README stays short; an
+`<a name>` before a fold keeps the links to it working (`#devices`, `#remote`, `#sendspin`,
+`#privacy`). GitHub draws its alert boxes only outside folds. Credits (Klangbild by hazymorning,
+then the owner's own line "Developed with the assistance of AI.") and License stay open at the end. The README's pictures are mockups
 in `docs/screenshots/`: the app's own screens (`ReadmeShotsTest`, with the colors the lights behind
 the TV would show) set in a room by `tools/make_readme_pictures.py`, made again when the look
 changes, and the download button, which downloads the newest APK at once
