@@ -83,7 +83,7 @@ class SettingsStoreTest {
             maUrl = "http://192.168.1.5:8095",
             maToken = "ma-token",
             tvSpeaker = true,
-            background = BackgroundMode.COVER,
+            background = BackgroundMode.WALL,
             motion = MotionLevel.LIVELY,
             roomLights = RoomLights("light.left", "light.top", "light.right"),
             roomLightBrightness = RoomLightBrightness.P90,

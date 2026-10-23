@@ -9,9 +9,8 @@ the lyrics and one for the settings. It began as a fork of Klangbild by hazymorn
 https://github.com/hazymorning/Klangbild), a calm now playing screen whose care for the picture
 it keeps: type, inks, light, motion and centering measured on what is seen. Unlike Klangbild,
 Encore is a player, so its buttons are part of the design and meet the same standard as
-everything else. The next phase
-gives it the look of a sing-along screen (larger, bolder words, the far lines blurred, the cover's
-colors as the background by default).
+everything else. It has the look of a sing-along screen: large bold words, the far lines out of
+focus, and the cover's colors as the background by default.
 
 ## The project
 
@@ -174,7 +173,10 @@ python3 tools/make_readme_pictures.py                          # README mockups,
   for all of them. A push or pull request that changes only the texts and
   pictures around the app (README, AGENTS.md, LICENSE, `docs/`, `tools/`, `.claude/`, the issue
   templates) runs nothing; tags and manual runs always run everything. The emulator jobs fetch
-  their system image with `ci/install-system-image.sh`, which tries a broken download again.
+  their system image with `ci/install-system-image.sh`, which tries a broken download again. The
+  emulators draw in software: Android TV 9 with SwiftShader, Android TV 14 with ANGLE on
+  SwiftShader (`swangle_indirect`), since SwiftShader alone brought that emulator down a moment
+  after the cover's colors showed (the app kept running; the emulator went away).
 
 ## Signing and releases
 
@@ -569,12 +571,15 @@ UI words are given in English with the German in parentheses where it matters.
 - **The song's words** (`Lyrics`, `LyricsText`; Lyrics (Songtext) on the stage's button, in the
   quick settings and under Information, remembered; Music Assistant only, nothing else to set
   up): the text column set for them, not a screen. The line sung now stands centered on the artwork (first cap height to last
-  baseline, `CenteringTest`) in the title's ink; the lines around it in the quiet ink, each
-  fading as a whole with the distance of its nearer edge (whole within 40 dp, like the settings
-  list), gone before its far edge comes within 8 dp of the status line or the bar.
-  One size per song, no size or weight changes: Jost 30, 26 or 24 sp, the largest at which no
-  line takes more than two rows (three at 24; two voices count apart), balanced breaks, a short
-  word kept with the next, Japanese, Chinese and Korean at 0.88×. The list glides one step in
+  baseline, `CenteringTest`) sharp, in the title's ink; the lines around it in the quiet ink, out
+  of focus from about two lines away (`focusOf`: sharp up to 0.6 lines, blurred from 2, crossing
+  over between; each line blurred once per song off the main thread, its coverage drawn small at
+  about a pixel to a dp and blurred by σ 5 dp, then drawn larger in its ink: `BlurredLine`), each
+  fading as a whole a little with the distance of its nearer edge (at most half, whole within
+  40 dp), gone before its far edge comes within 8 dp of the status line or the bar. One size per
+  song, no size or weight changes: Jost bold (640) at 40, 36, 32 or 28 sp, the largest at which no
+  line takes more than two rows (three at 32 and 28; two voices count apart), balanced breaks, a
+  short word kept with the next, Japanese, Chinese and Korean at 0.88×. The list glides one step in
   500 ms, starting 300 ms before the line is sung, the light going with it (a glide that comes
   while one runs carries on from its pace); a break (an empty line, a lone note or
   "[Instrumental]", at least 4 s) only dims the line; before the first line it waits unlit in
@@ -679,8 +684,8 @@ UI words are given in English with the German in parentheses where it matters.
   comes from `Texts` (resources, plurals, numbers, percent, dates); the time of day follows
   the system's 12 or 24 hour setting. A recreated activity never applies its launch extras
   again.
-- **Cover colors** (setting "Background", `BackgroundMode.COVER`): the cover's own colors as the
-  wall, edge to edge and 18 dp beyond (`OVERSCAN_DP`: the ±6 dp drift never shows a border; the
+- **Cover colors** (setting "Background", `BackgroundMode.COVER`, the default, as on a
+  sing-along screen; Plain is the black or paper wall): the cover's own colors as the wall, edge to edge and 18 dp beyond (`OVERSCAN_DP`: the ±6 dp drift never shows a border; the
   only wall without the black edge band, `EdgeBandTest` checks the edges are filled). A deep
   ground plus one mass per cover color (up to 5), placed where the color sits in the cover and
   pushed ≥ 0.42 screen widths apart; lit cores in the 3 most characteristic masses; 1 to 2
@@ -695,8 +700,7 @@ UI words are given in English with the German in parentheses where it matters.
   rendered pixels). No shadow under the artwork, no vignette. `FieldModel` computes the same
   field on the CPU (text shade, lights). On color the lower inks stand a little lighter
   (0.82 / 0.71); the progress bar takes the cover's leading hue.
-  "Intensity" sets how strong the colors are. The next phase makes the cover colors the default
-  background.
+  "Intensity" sets how strong the colors are.
 - **Motion** (Off / Slow / Medium / Fast = speed 0 / 0.3 / 0.6 / 1.0; the main layer turns
   once in about 470 / 230 / 140 s): only while music plays, on the field's own clock
   (`FieldClock`): a pause freezes it, nothing jumps; screen and lights read the same clock. One

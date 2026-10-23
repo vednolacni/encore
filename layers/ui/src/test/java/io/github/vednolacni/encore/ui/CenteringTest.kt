@@ -109,7 +109,7 @@ class CenteringTest {
             val sung = ink.lines(left, 1920, threshold = LIT).single()
             val case = "in ${t.locale}"
             // Its cap height and its baseline are as far from the artwork's middle on either side.
-            val cap = 30f * io.github.vednolacni.encore.ui.theme.Fonts.CAP_HEIGHT * 2f
+            val cap = 40f * io.github.vednolacni.encore.ui.theme.Fonts.CAP_HEIGHT * 2f
             assertWithMessage("$case: the sung line's baseline").that(abs(sung.baseline - (layout.textCenter * 2f + cap / 2f))).isAtMost(1.5f)
             // It starts on the column's left edge (pulled left by large type's extra side bearing, a pixel or two).
             assertWithMessage("$case: the sung line's left edge").that(abs(sung.left - layout.columnLeft * 2f)).isAtMost(4f)

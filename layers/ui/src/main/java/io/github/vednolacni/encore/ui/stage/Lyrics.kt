@@ -25,8 +25,17 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.graphics.FilterQuality
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.compose.ui.graphics.drawscope.CanvasDrawScope
 import androidx.compose.ui.graphics.drawscope.DrawScope
+import androidx.compose.ui.graphics.drawscope.scale
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.layout.AlignmentLine
@@ -47,12 +56,16 @@ import androidx.compose.ui.text.style.TextDirection
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.IntOffset
+import androidx.compose.ui.unit.IntSize
 import androidx.compose.ui.unit.LayoutDirection
+import androidx.core.graphics.createBitmap
 import io.github.vednolacni.encore.domain.LyricPlace
 import io.github.vednolacni.encore.domain.Lyrics
 import io.github.vednolacni.encore.domain.LyricsCursor
 import io.github.vednolacni.encore.domain.PlayerStatus
 import io.github.vednolacni.encore.math.smoothstep
+import io.github.vednolacni.encore.render.ImageOps
 import io.github.vednolacni.encore.render.StageGrid
 import io.github.vednolacni.encore.ui.LocalStill
 import io.github.vednolacni.encore.ui.Motion
@@ -65,12 +78,14 @@ import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlin.math.abs
+import kotlin.math.ceil
 import kotlin.math.roundToInt
 
 /*
- * A song's words in the text column. The line sung now stands in the middle, centered on the
- * artwork as the text block is (from its first cap height to its last baseline), in the title's
- * ink. The lines before and after it are quiet and fade with distance, as the settings list does.
+ * A song's words in the text column, large and bold as on a sing-along screen. The line sung now
+ * stands in the middle, centered on the artwork as the text block is (from its first cap height to
+ * its last baseline), sharp and in the title's ink. The lines before and after it are quiet, the
+ * farther ones out of focus, and they fade with distance, as the settings list does.
  * As the song moves on, the list glides one step, and the light goes with it: the line that comes
  * is lit as it arrives, the one before dims as it leaves. A break in the singing only dims the
  * line; a jump cross-fades the list to its new place. The status line keeps its place; the
@@ -82,11 +97,12 @@ import kotlin.math.roundToInt
 /** One size for a song's words: [size] sp, a line on at most [rows] rows, [leading] between rows. */
 private class LyricsStep(val size: Float, val rows: Int, val weight: Int, val leading: Float, val tracking: Float)
 
-/** From large to small, as the title's ladder: two rows a line at the larger sizes, three at the smallest. */
+/** From large to small, all bold: two rows a line at the larger sizes, three at the smaller ones. */
 private val lyricsLadder = listOf(
-    LyricsStep(30f, 2, 420, 1.15f, -0.005f),
-    LyricsStep(26f, 2, 430, 1.16f, 0f),
-    LyricsStep(24f, 3, 430, 1.16f, 0f),
+    LyricsStep(40f, 2, 640, 1.1f, -0.012f),
+    LyricsStep(36f, 2, 640, 1.1f, -0.01f),
+    LyricsStep(32f, 3, 640, 1.12f, -0.008f),
+    LyricsStep(28f, 3, 640, 1.12f, -0.005f),
 )
 
 /** The words' style at [step]; Japanese, Chinese and Korean words a little smaller, as titles are. */
@@ -96,7 +112,10 @@ private fun lyricsStyle(step: LyricsStep, cjk: Boolean): TextStyle {
         .merge(TextStyle(lineBreak = LineBreak.Heading, textDirection = TextDirection.Content, textAlign = TextAlign.Left))
 }
 
-/** The words of one song as set for the column: each row on its own line, and where each line stands (px). */
+/**
+ * The words of one song as set for the column: each row on its own line, where each line stands
+ * (px), and each line once more out of focus ([blurred]; none for an empty line).
+ */
 @Immutable
 internal class LyricsPlan(
     val rows: List<LyricRow>,
@@ -107,12 +126,32 @@ internal class LyricsPlan(
     val cap: Float,
     /** How far the rows are pulled left (px): large type has more room before its first stem. */
     val indent: Int,
+    val blurred: List<BlurredLine?> = emptyList(),
 ) {
     /** Each line's middle, from its first cap height to its last baseline (px). */
     val centers = FloatArray(tops.size) { (tops[it] + bottoms[it]) / 2f }
 
     /** Where the list stands with [place] in the middle (px). */
     fun center(place: LyricPlace): Float = centers[place.index.coerceIn(0, centers.size - 1)]
+
+    /**
+     * Which line stands in the middle with the list at [scroll] (px), counted on between two lines
+     * while it glides from one to the next (1.5: halfway from the second line to the third).
+     */
+    fun indexAt(scroll: Float): Float {
+        val c = centers
+        if (c.isEmpty()) return 0f
+        if (scroll <= c[0]) return 0f
+        if (scroll >= c[c.size - 1]) return (c.size - 1).toFloat()
+        var lo = 0
+        var hi = c.size - 1
+        while (hi - lo > 1) {
+            val mid = (lo + hi) ushr 1
+            if (c[mid] <= scroll) lo = mid else hi = mid
+        }
+        val span = c[hi] - c[lo]
+        return lo + if (span > 0f) (scroll - c[lo]) / span else 0f
+    }
 
     /** The first row whose baseline is at least [y] (px). */
     fun firstAt(y: Float): Int {
@@ -128,6 +167,13 @@ internal class LyricsPlan(
 
 /** A row of a line: its words laid out on one line, the line it belongs to, and its baseline (px). */
 internal class LyricRow(val layout: TextLayoutResult, val line: Int, val baseline: Float)
+
+/**
+ * A line out of focus: its coverage blurred, small ([image], one pixel to a dp or so), drawn
+ * [scale] times as large in the line's ink, its top left corner at [left], [top] (px from where the
+ * line's rows start and from the plan's first cap height).
+ */
+internal class BlurredLine(val image: ImageBitmap, val left: Float, val top: Float, val scale: Float)
 
 /**
  * Sets [lyrics] for a column [columnWidth] dp wide: the largest size of the ladder at which every
@@ -175,7 +221,41 @@ internal fun planLyrics(lyrics: Lyrics, columnWidth: Float, measurer: TextMeasur
         bottoms[i] = baseline
         baseline += gap + cap
     }
-    return LyricsPlan(rows, tops, bottoms, cap, (opticalIndent(style.fontSize.value) * density).roundToInt())
+    val blurred = List(lyrics.lines.size) { i -> blurLine(rows.filter { it.line == i }, density) }
+    return LyricsPlan(rows, tops, bottoms, cap, (opticalIndent(style.fontSize.value) * density).roundToInt(), blurred)
+}
+
+/**
+ * [rows] (one line's) out of focus: drawn small, at about a pixel to a dp, as white coverage, then
+ * blurred by [BLUR_RADIUS_DP] in three box passes, which comes close to a Gaussian. Once per song,
+ * off the main thread; a frame only draws the small picture larger. Null for a line without words.
+ */
+private fun blurLine(rows: List<LyricRow>, density: Float): BlurredLine? {
+    if (rows.isEmpty() || rows.all { it.layout.size.width == 0 }) return null
+    val k = (1f / density).coerceAtMost(1f)
+    val top = rows.minOf { it.baseline - it.layout.firstBaseline }
+    val bottom = rows.maxOf { it.baseline - it.layout.firstBaseline + it.layout.size.height }
+    val width = rows.maxOf { it.layout.size.width }.toFloat()
+    val pad = ceil(BLUR_RADIUS_DP * BLUR_SPREAD).toInt()
+    val w = ceil(width * k).toInt() + 2 * pad
+    val h = ceil((bottom - top) * k).toInt() + 2 * pad
+    val sharp = ImageBitmap(w, h)
+    CanvasDrawScope().draw(Density(1f), LayoutDirection.Ltr, androidx.compose.ui.graphics.Canvas(sharp), Size(w.toFloat(), h.toFloat())) {
+        scale(k, k, pivot = Offset.Zero) {
+            for (row in rows) {
+                drawText(row.layout, color = Color.White, topLeft = Offset(pad / k, pad / k + row.baseline - row.layout.firstBaseline - top))
+            }
+        }
+    }
+    val px = IntArray(w * h)
+    sharp.readPixels(px, 0, 0, w, h)
+    val cover = FloatArray(w * h) { (px[it] ushr 24) / 255f }
+    ImageOps.blur(cover, w, h, (BLUR_RADIUS_DP / BLUR_PASS_SIGMA).roundToInt().coerceAtLeast(1))
+    for (i in px.indices) px[i] = ((cover[i] * 255f + 0.5f).toInt().coerceIn(0, 255) shl 24) or 0xFFFFFF
+    val small = createBitmap(w, h, android.graphics.Bitmap.Config.ALPHA_8)
+    small.setPixels(px, 0, w, 0, 0, w, h)
+    sharp.asAndroidBitmap().recycle()
+    return BlurredLine(small.asImageBitmap(), -pad / k, top - pad / k, 1f / k)
 }
 
 /**
@@ -297,6 +377,8 @@ internal fun LyricsText(
     val styles = remember(model.scene.palette) { StageStyles(model.scene.palette) }
     val room = remember(layout, styles) { LyricsRoom(layout, styles) }
     val inks = remember(styles) { Array(INK_STEPS + 1) { lerp(styles.quiet, styles.ink, it / INK_STEPS.toFloat()) } }
+    // The same inks for the lines out of focus, as filters made once.
+    val tints = remember(inks) { Array(inks.size) { ColorFilter.tint(inks[it], BlendMode.SrcIn) } }
     val views = LocalLyricsViews.current
     val view = views?.of(lyrics) ?: remember(lyrics) { LyricsView(lyrics) }
     val position by rememberUpdatedState(model.positionMs)
@@ -339,8 +421,8 @@ internal fun LyricsText(
                 val j = view.jump.value
                 val gone = Motion.phase(j, 0f, JUMP_OUT, Motion.Dimmer)
                 val come = Motion.phase(j, JUMP_IN, 1f, Motion.Dimmer)
-                if (j < 1f) drawLyrics(p, view.from, x, focus, room.above, below, inks, glow, a * view.fromAlpha * (1f - gone))
-                drawLyrics(p, view.scroll.value, x, focus, room.above, below, inks, glow, a * come)
+                if (j < 1f) drawLyrics(p, view.from, x, focus, room.above, below, inks, tints, glow, a * view.fromAlpha * (1f - gone))
+                drawLyrics(p, view.scroll.value, x, focus, room.above, below, inks, tints, glow, a * come)
             }
             // 1: the progress bar or a notice, above the song; changes cross-fade
             BottomLine(slot, model, styles, playing, line(TextLine.BOTTOM), label = "lyrics-slot-line")
@@ -421,7 +503,8 @@ private class LyricsRoom(layout: StageGrid, styles: StageStyles) {
  * The rows of [plan] with the list standing at [scroll] (px) under the middle ([focus], px), from
  * [x]: each line fading as a whole with its distance from the middle ([lineAlpha]) within
  * [above] and [below] (dp), the line in the middle lit by [glow] (its ink taken from [inks], the
- * quiet ink to the title's), [alpha] for all of them.
+ * quiet ink to the title's), [alpha] for all of them. The farther a line stands from the middle,
+ * the more of it is drawn out of focus ([focusOf]): its blurred picture in the same ink ([tints]).
  */
 private fun DrawScope.drawLyrics(
     plan: LyricsPlan,
@@ -431,6 +514,7 @@ private fun DrawScope.drawLyrics(
     above: Float,
     below: Float,
     inks: Array<Color>,
+    tints: Array<ColorFilter>,
     glow: Float,
     alpha: Float,
 ) {
@@ -439,35 +523,57 @@ private fun DrawScope.drawLyrics(
     val rows = plan.rows
     var i = plan.firstAt(scroll - above * d)
     val end = scroll + below * d + plan.cap
+    val middle = plan.indexAt(scroll)
     var line = -1
     var f = 0f
-    var color = inks[0]
+    var sharp = 1f
+    var ink = 0
     while (i < rows.size) {
         val row = rows[i++]
         if (row.baseline > end) break
         if (row.line != line) {
             line = row.line
             f = lineAlpha((plan.tops[line] - scroll) / d, (plan.bottoms[line] - scroll) / d, above, below)
-            color = inks[(glowOf(plan, line, scroll) * glow * INK_STEPS).roundToInt().coerceIn(0, INK_STEPS)]
+            ink = (glowOf(plan, line, scroll) * glow * INK_STEPS).roundToInt().coerceIn(0, INK_STEPS)
+            sharp = focusOf(abs(line - middle))
+            val soft = plan.blurred.getOrNull(line)
+            if (soft != null && sharp < 1f && f > 0.003f) {
+                val img = soft.image
+                drawImage(
+                    img,
+                    dstOffset = IntOffset((x + soft.left).roundToInt(), (focus + soft.top - scroll).roundToInt()),
+                    dstSize = IntSize((img.width * soft.scale).roundToInt(), (img.height * soft.scale).roundToInt()),
+                    alpha = alpha * f * (1f - sharp),
+                    colorFilter = tints[ink],
+                    filterQuality = FilterQuality.Low,
+                )
+            }
         }
-        if (f <= 0.003f) continue
+        if (f * sharp <= 0.003f) continue
         val top = (focus + row.baseline - scroll - row.layout.firstBaseline).roundToInt().toFloat()
-        drawText(row.layout, color = color, topLeft = Offset(x, top), alpha = alpha * f)
+        drawText(row.layout, color = inks[ink], topLeft = Offset(x, top), alpha = alpha * f * sharp)
     }
 }
 
 /**
+ * How sharp a line is [lines] away from the one in the middle: wholly in focus there and next to
+ * it most of the way, out of focus two lines away and beyond.
+ */
+private fun focusOf(lines: Float): Float = 1f - smoothstep(FOCUS_FROM, FOCUS_GONE, lines)
+
+/**
  * How present a line is that reaches from [top] to [bottom] (dp from the middle, its first cap
  * height and last baseline), with [above] and [below] of room: whole in the middle and near it,
- * fading with the distance of its nearer edge as the settings list fades, and gone before its
- * farther edge comes within [EDGE_GONE] of the status line, the song or the bar.
+ * fading a little with the distance of its nearer edge (the far lines are quiet and out of focus
+ * already, so they stay in view), and gone before its farther edge comes within [EDGE_GONE] of
+ * the status line or the bar.
  */
 private fun lineAlpha(top: Float, bottom: Float, above: Float, below: Float): Float {
     if (top < 0f && bottom > 0f) return 1f
     val near = if (bottom <= 0f) -bottom else top
     val far = if (bottom <= 0f) -top else bottom
     val limit = (if (bottom <= 0f) above else below) - EDGE_GONE
-    val byDistance = 1f - smoothstep(FADE_FROM, limit.coerceAtLeast(FADE_FROM + 1f), near)
+    val byDistance = 1f - DISTANCE_FADE * smoothstep(FADE_FROM, limit.coerceAtLeast(FADE_FROM + 1f), near)
     val byEdge = 1f - smoothstep(limit - EDGE_FADE, limit, far)
     return byDistance * byEdge
 }
@@ -494,7 +600,10 @@ private const val LINE_GAP_EM = 0.8f
 /** A line whose nearer edge is within this distance of the middle is whole (dp): the lines next to the one sung. */
 private const val FADE_FROM = 40f
 
-/** A line is gone before its farther edge comes this close to the status line, the song or the bar (dp)... */
+/** How much of a line the distance takes away at most, before the edge does the rest. */
+private const val DISTANCE_FADE = 0.5f
+
+/** A line is gone before its farther edge comes this close to the status line or the bar (dp)... */
 private const val EDGE_GONE = 8f
 
 /** ...and it fades over this stretch before (dp). */
@@ -511,6 +620,19 @@ private const val CJK_SAMPLE = 12
 
 /** Steps between the quiet ink and the title's: more than the eye tells apart in a glide. */
 private const val INK_STEPS = 48
+
+/** How far a line out of focus is blurred (σ, dp). */
+private const val BLUR_RADIUS_DP = 5f
+
+/** How far the blur reaches beyond the words, in σ: past this nothing of it is seen. */
+private const val BLUR_SPREAD = 3f
+
+/** Three box passes of radius r blur like a Gaussian of σ ≈ this × r. */
+private const val BLUR_PASS_SIGMA = 1.1f
+
+/** A line is sharp up to this many lines from the middle, and out of focus from this many. */
+private const val FOCUS_FROM = 0.6f
+private const val FOCUS_GONE = 2f
 
 /** The words glide one step in this long (ms). */
 private const val LYRICS_GLIDE_MS = 500

@@ -43,13 +43,16 @@ object ImageOps {
      * independent of the radius). Edges clamp.
      */
     fun blur(img: LinearImage, radius: Int, passes: Int = 3) {
+        for (plane in arrayOf(img.r, img.g, img.b)) blur(plane, img.width, img.height, radius, passes)
+    }
+
+    /** The same for one plane of [w] × [h] values (a coverage, say). */
+    fun blur(plane: FloatArray, w: Int, h: Int, radius: Int, passes: Int = 3) {
         if (radius <= 0) return
-        val tmp = FloatArray(max(img.width, img.height))
-        for (plane in arrayOf(img.r, img.g, img.b)) {
-            repeat(passes) {
-                boxBlurH(plane, img.width, img.height, radius, tmp)
-                boxBlurV(plane, img.width, img.height, radius, tmp)
-            }
+        val tmp = FloatArray(max(w, h))
+        repeat(passes) {
+            boxBlurH(plane, w, h, radius, tmp)
+            boxBlurV(plane, w, h, radius, tmp)
         }
     }
 
