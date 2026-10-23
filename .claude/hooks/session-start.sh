@@ -9,6 +9,6 @@ if [ "${CLAUDE_CODE_REMOTE:-}" != "true" ]; then
 fi
 
 cd "${CLAUDE_PROJECT_DIR:-.}"
-git config user.name "hazymorning"
-git config user.email "302314336+hazymorning@users.noreply.github.com"
+git config user.name "vednolacni"
+git config user.email "maticresnik13@gmail.com"
 git config commit.gpgsign false

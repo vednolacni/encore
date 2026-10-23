@@ -30,7 +30,7 @@ dependencyResolutionManagement {
 
 enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
-rootProject.name = "Klangbild"
+rootProject.name = "Encore"
 
 // The app: the activity, the speaker's service, the screensaver and the wiring of it all.
 include(":androidApp")

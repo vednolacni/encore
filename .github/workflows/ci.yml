@@ -83,7 +83,7 @@ jobs:
           TAG: ${{ startsWith(github.ref, 'refs/tags/v') && github.ref_name || inputs.release || '' }}
         run: |
           if [ -n "$TAG" ]; then
-            ./gradlew :androidApp:assembleRelease "-Pklangbild.versionName=${TAG#v}" --stacktrace
+            ./gradlew :androidApp:assembleRelease "-Pencore.versionName=${TAG#v}" --stacktrace
           else
             ./gradlew :androidApp:assembleRelease --stacktrace
           fi
@@ -93,13 +93,13 @@ jobs:
         run: |
           meta=androidApp/build/outputs/apk/release/output-metadata.json
           echo "version_name=$(jq -r '.elements[0].versionName' "$meta")" >> "$GITHUB_OUTPUT"
-          cp "androidApp/build/outputs/apk/release/$(jq -r '.elements[0].outputFile' "$meta")" klangbild.apk
+          cp "androidApp/build/outputs/apk/release/$(jq -r '.elements[0].outputFile' "$meta")" encore.apk
 
       - name: Upload the APK
         uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
-          name: klangbild-apk
-          path: klangbild.apk
+          name: encore-apk
+          path: encore.apk
           if-no-files-found: error
 
   # Every test, the picture tests too: their pictures are uploaded, and on a pull request they are
@@ -131,7 +131,7 @@ jobs:
           "$RUNNER_TEMP/sendspin/bin/pip" install --quiet 'aiosendspin[server]==10.2.0'
 
       - name: Tests and pictures
-        run: ./gradlew testDebugUnitTest -Pklangbild.pictures -Proborazzi.test.record=true "-Pklangbild.sendspin=$RUNNER_TEMP/sendspin/bin/python" --continue --stacktrace
+        run: ./gradlew testDebugUnitTest -Pencore.pictures -Proborazzi.test.record=true "-Pencore.sendspin=$RUNNER_TEMP/sendspin/bin/python" --continue --stacktrace
 
       # Each module renders its pictures into a folder of its own; together they are one tree.
       - name: Gather the pictures
@@ -185,7 +185,7 @@ jobs:
           key: robolectric-${{ hashFiles('gradle/libs.versions.toml') }}
 
       - name: Render the pictures
-        run: ./gradlew testDebugUnitTest -Pklangbild.pictures -Proborazzi.test.record=true --continue --stacktrace
+        run: ./gradlew testDebugUnitTest -Pencore.pictures -Proborazzi.test.record=true --continue --stacktrace
 
       # Each module renders its pictures into a folder of its own; together they are one tree.
       - name: Gather the pictures
@@ -270,7 +270,7 @@ jobs:
           path: androidApp/build/reports/lint-results-release.html
           if-no-files-found: warn
 
-  # On the oldest Android Klangbild supports and on a recent one.
+  # On the oldest Android Encore supports and on a recent one.
   smoke:
     name: Smoke test on Android TV ${{ matrix.version }}
     needs: apk
@@ -289,7 +289,7 @@ jobs:
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         with:
-          name: klangbild-apk
+          name: encore-apk
 
       - name: Free disk space
         # The TV image wants a large userdata partition; the runner's disk is tight.
@@ -314,7 +314,7 @@ jobs:
           python3 -m venv "$RUNNER_TEMP/sendspin"
           "$RUNNER_TEMP/sendspin/bin/pip" install --quiet 'aiosendspin[server]==10.2.0'
 
-      - name: Klangbild with a stand-in Home Assistant on Android TV ${{ matrix.version }}
+      - name: Encore with a stand-in Home Assistant on Android TV ${{ matrix.version }}
         uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
         env:
           SENDSPIN_PYTHON: ${{ runner.temp }}/sendspin/bin/python
@@ -326,7 +326,7 @@ jobs:
           disable-animations: false
           disk-size: 3G
           emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-metrics
-          script: bash ci/tv-smoke.sh klangbild.apk
+          script: bash ci/tv-smoke.sh encore.apk
 
       - name: Upload the smoke test results
         if: always()
@@ -336,44 +336,9 @@ jobs:
           path: smoke/
           if-no-files-found: warn
 
-  rotation:
-    name: Key rotation on API ${{ matrix.api }}
-    needs: apk
-    runs-on: ubuntu-latest
-    timeout-minutes: 30
-    strategy:
-      fail-fast: false
-      matrix:
-        api: [28, 29, 30, 31, 32, 33, 34, 35, 36]
-    steps:
-      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
-
-      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
-        with:
-          name: klangbild-apk
-
-      - name: Enable KVM
-        run: |
-          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
-          sudo udevadm control --reload-rules
-          sudo udevadm trigger --name-match=kvm
-
-      - name: Download the emulator image
-        run: bash ci/install-system-image.sh ${{ matrix.api }} google_apis x86_64
-
-      - name: Install over a copy signed with the old key, refuse the old key afterwards
-        uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2.38.0
-        with:
-          api-level: ${{ matrix.api }}
-          target: google_apis
-          arch: x86_64
-          disable-animations: true
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-metrics
-          script: bash ci/rotation-check.sh klangbild.apk
-
   release:
     name: GitHub release
-    needs: [apk, tests, lint, smoke, rotation]
+    needs: [apk, tests, lint, smoke]
     # A version tag, or a manual run on main with a version. A beta (a version with a hyphen) comes
     # from a manual run on any branch. A manual run leaves its release a draft only the owner sees,
     # so its notes can be read once more; publishing it on GitHub creates its tag, whose own run
@@ -397,33 +362,29 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           if [ "$GITHUB_EVENT_NAME" = push ] && [ "$(gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq .isDraft 2>/dev/null)" = false ]; then
-            echo "Klangbild $TAG is out already."
+            echo "Encore $TAG is out already."
             echo "already=true" >> "$GITHUB_OUTPUT"
           fi
 
       - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
         if: steps.published.outputs.already != 'true'
         with:
-          name: klangbild-apk
+          name: encore-apk
 
       - name: Sign
         if: steps.published.outputs.already != 'true'
         env:
           RELEASE_KEYSTORE: ${{ secrets.RELEASE_KEYSTORE }}
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
-          RELEASE_LINEAGE: ${{ secrets.RELEASE_LINEAGE }}
-          # The key every copy installed so far trusts: the lineage must start with it.
-          ORIGINAL_CERT_SHA256: 6a27430a5a3a6507f770002420f7972ba2a99320ed557e32dde734eceaf837d9
         run: |
-          if [ -z "$RELEASE_KEYSTORE" ] || [ -z "$RELEASE_KEYSTORE_PASSWORD" ] || [ -z "$RELEASE_LINEAGE" ]; then
-            echo "::error::The signing secrets RELEASE_KEYSTORE, RELEASE_KEYSTORE_PASSWORD and RELEASE_LINEAGE are missing."
+          if [ -z "$RELEASE_KEYSTORE" ] || [ -z "$RELEASE_KEYSTORE_PASSWORD" ]; then
+            echo "::error::The signing secrets RELEASE_KEYSTORE and RELEASE_KEYSTORE_PASSWORD are missing."
             exit 1
           fi
           keys="$(mktemp -d)"
           trap 'rm -rf "$keys"' EXIT
           printf '%s' "$RELEASE_KEYSTORE" | base64 -d > "$keys/release.p12"
-          printf '%s' "$RELEASE_LINEAGE" | base64 -d > "$keys/lineage"
-          bash ci/sign-release.sh klangbild.apk "$keys/release.p12" "$keys/lineage"
+          bash ci/sign-release.sh encore.apk "$keys/release.p12"
 
       - name: Publish
         if: steps.published.outputs.already != 'true'
@@ -432,12 +393,12 @@ jobs:
           tag_name: ${{ env.TAG }}
           # A manual run creates the tag on the commit it built.
           target_commitish: ${{ github.sha }}
-          name: Klangbild ${{ needs.apk.outputs.version_name }}
+          name: Encore ${{ needs.apk.outputs.version_name }}
           body_path: docs/releases/${{ env.TAG }}.md
           # Only a tag with a hyphen is a pre-release; every other one is the latest release. A
           # manual run's release stays a draft until it is published by hand.
           prerelease: ${{ contains(env.TAG, '-') }}
           draft: ${{ github.event_name == 'workflow_dispatch' }}
           make_latest: ${{ !contains(env.TAG, '-') }}
-          files: klangbild.apk
+          files: encore.apk
           fail_on_unmatched_files: true

@@ -1,5 +1,7 @@
-Klangbild is released under the MIT License (LICENSE in the source repository,
-https://github.com/hazymorning/Klangbild). It includes the following third-party works.
+Encore is released under the MIT License (LICENSE in the source repository,
+https://github.com/vednolacni/encore). It is based on Klangbild by hazymorning
+(https://github.com/hazymorning/Klangbild), released under the MIT License as well. It
+includes the following third-party works.
 
 Apache License 2.0 (full text in Apache-2.0.txt)
 

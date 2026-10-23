@@ -5,7 +5,7 @@
   article or a number with the word it belongs to; typographic quotes and apostrophes.
 -->
 <resources xmlns:tools="http://schemas.android.com/tools">
-    <string name="app_name" translatable="false">Klangbild</string>
+    <string name="app_name" translatable="false">Encore</string>
 
     <!-- Values used on many lines -->
     <string name="on">On</string>
@@ -28,7 +28,7 @@
     <string name="about_section_info">What stands beside the cover: the clock, the progress bar, what comes next and the lyrics.</string>
     <string name="about_section_lights">Lights in the room that glow in the music’s colors.</string>
     <string name="about_section_remote">What the remote’s keys do.</string>
-    <string name="about_section_timer">The sleep timer, and when Klangbild turns off.</string>
+    <string name="about_section_timer">The sleep timer, and when Encore turns off.</string>
     <string name="about_section_system">Home Assistant, Music Assistant, playing here and the language.</string>
 
     <!-- Settings menu: lines -->
@@ -120,18 +120,18 @@
     <string name="about_background_plain">A calm background: dark with the cover’s light, or light with its shadow.</string>
     <string name="about_intensity_cover">How strongly the cover’s colors tint the background.</string>
     <string name="about_intensity_cover_strong">Strong: rich colors.</string>
-    <string name="about_intensity_cover_normal">Normal is how Klangbild is meant to look.</string>
+    <string name="about_intensity_cover_normal">Normal is how Encore is meant to look.</string>
     <string name="about_intensity_cover_low">Low: muted colors.</string>
     <string name="about_intensity_cover_off_light">Off: almost no color.</string>
     <string name="about_intensity_cover_off_dark">Off: only the cover on black.</string>
     <string name="about_intensity_light">How much of the cover’s color the light background takes.</string>
     <string name="about_intensity_light_strong">Strong: a clear tint.</string>
-    <string name="about_intensity_light_normal">Normal is how Klangbild is meant to look.</string>
+    <string name="about_intensity_light_normal">Normal is how Encore is meant to look.</string>
     <string name="about_intensity_light_low">Low: only a hint.</string>
     <string name="about_intensity_light_off">Off: no color.</string>
     <string name="about_intensity_dark">How brightly the cover lights the background around it.</string>
     <string name="about_intensity_dark_strong">Strong suits bright rooms.</string>
-    <string name="about_intensity_dark_normal">Normal is how Klangbild is meant to look.</string>
+    <string name="about_intensity_dark_normal">Normal is how Encore is meant to look.</string>
     <string name="about_intensity_dark_low">Low suits dark evenings.</string>
     <string name="about_intensity_dark_off">Off: only the cover, no light.</string>
     <string name="about_motion_both">How fast the colors in the background and in the lights flow.</string>
@@ -153,15 +153,15 @@
     <string name="about_up_down_buttons">Arrow down chooses the buttons at the bottom, and down again opens the quick settings. Back closes them.</string>
     <string name="about_spoken_jump">With audiobooks and podcasts, left jumps back 15 seconds, right ahead 30 seconds. Held, they go to the previous or next chapter.</string>
     <string name="about_spoken_change">Left and right change the track with audiobooks and podcasts too.</string>
-    <string name="about_sleep_timer_off">Pauses the music after a while, or at the end of a chapter. Klangbild must be running.</string>
+    <string name="about_sleep_timer_off">Pauses the music after a while, or at the end of a chapter. Encore must be running.</string>
     <string name="about_sleep_timer_at">The music pauses at %s.</string>
     <string name="about_sleep_timer_end">The music pauses at the %s.</string>
     <string name="sleep_end_chapter">end of the chapter</string>
     <string name="sleep_end_episode">end of the episode</string>
     <string name="sleep_end_book">end of the audiobook</string>
     <string name="sleep_end_track">end of the track</string>
-    <string name="about_sleep_after">When no music plays, Klangbild turns off after this time.</string>
-    <string name="about_sleep_action_close">Klangbild closes and returns to the home screen.</string>
+    <string name="about_sleep_after">When no music plays, Encore turns off after this time.</string>
+    <string name="about_sleep_action_close">Encore closes and returns to the home screen.</string>
     <string name="about_sleep_action_release">The TV takes over: its screen saver or standby.</string>
     <string name="about_connection_set_up">OK shows the QR code. On your phone you sign in to Home Assistant and choose the speaker.</string>
     <string name="about_connection">OK shows the QR code. On your phone you change address, sign-in and speaker.</string>
@@ -170,13 +170,13 @@
     <string name="about_language">The language of the screens and the setup page. The system language is the TV’s.</string>
     <string name="about_play_here_set_up">With Music Assistant, this TV can play music in time with your other speakers. OK shows the QR code to set it up on your phone.</string>
     <string name="about_play_here_off">Music Assistant can play music on this TV too, in time with your other speakers. Once you turn it on, this TV shows up there under its own name.</string>
-    <string name="about_play_here_on">This TV is one of Music Assistant’s speakers and keeps playing while Klangbild is closed. When music starts here, Klangbild shows it.</string>
-    <string name="about_play_here_followed">This TV is the speaker Klangbild follows, so it keeps playing here. To turn it off, choose another speaker on your phone first. OK shows the QR code.</string>
-    <string name="about_play_here_unreachable">Music Assistant doesn’t answer on port 8927 right now, so this TV can’t play yet. Klangbild keeps trying.</string>
+    <string name="about_play_here_on">This TV is one of Music Assistant’s speakers and keeps playing while Encore is closed. When music starts here, Encore shows it.</string>
+    <string name="about_play_here_followed">This TV is the speaker Encore follows, so it keeps playing here. To turn it off, choose another speaker on your phone first. OK shows the QR code.</string>
+    <string name="about_play_here_unreachable">Music Assistant doesn’t answer on port 8927 right now, so this TV can’t play yet. Encore keeps trying.</string>
     <string name="about_play_here_too_old">To play on this TV, Music Assistant needs version 2.10.7 or later.</string>
-    <string name="about_play_here_too_new">Your Music Assistant is newer than this version of Klangbild. Once Klangbild is updated, this TV plays again.</string>
+    <string name="about_play_here_too_new">Your Music Assistant is newer than this version of Encore. Once Encore is updated, this TV plays again.</string>
     <string name="about_play_here_refused">Music Assistant didn’t let this TV in. You can pair it there with the code from the setup page on your phone.</string>
-    <string name="about_play_here_no_key">This TV can’t open its key for Music Assistant at the moment, so it can’t play yet. Klangbild keeps trying.</string>
+    <string name="about_play_here_no_key">This TV can’t open its key for Music Assistant at the moment, so it can’t play yet. Encore keeps trying.</string>
 
     <!-- Quick settings -->
     <string name="quick_lyrics">Lyrics</string>
@@ -259,7 +259,7 @@
     <string name="debug_sound_close">Close timing</string>
     <string name="debug_sound_none">No sound</string>
     <!-- The setup page on the phone -->
-    <string name="page_title">Set up Klangbild</string>
+    <string name="page_title">Set up Encore</string>
     <string name="page_subtitle">Setup for the TV</string>
     <string name="page_code_heading">Code</string>
     <string name="page_code_label">The six-digit code on the TV</string>
@@ -289,13 +289,13 @@
     <string name="page_ma_token_placeholder">From Music Assistant</string>
     <string name="page_ma_token_hint">Create a long-lived access token in Music Assistant under Settings → Profile. Leave it empty if you don’t need it.</string>
     <string name="page_tv_speaker">Play music from Music Assistant on this TV</string>
-    <string name="page_tv_speaker_hint">This TV then shows up in Music Assistant as a speaker under its own name and plays in time with your other speakers, also while Klangbild is closed.</string>
+    <string name="page_tv_speaker_hint">This TV then shows up in Music Assistant as a speaker under its own name and plays in time with your other speakers, also while Encore is closed.</string>
     <string name="page_pair_toggle">Pairing code</string>
     <string name="page_pair_hint">Only needed if Music Assistant asks to pair this TV: enter this code there.</string>
     <string name="page_this_tv">This TV</string>
     <string name="page_this_tv_meta">What Music Assistant plays on this TV</string>
     <string name="page_lights_heading">5 · Lights (optional)</string>
-    <string name="page_lights_hint">Your lights glow in the cover’s colors. Klangbild remembers how they were and restores them after the music.</string>
+    <string name="page_lights_hint">Your lights glow in the cover’s colors. Encore remembers how they were and restores them after the music.</string>
     <string name="page_lights_empty">Connect Home Assistant first, then the lights show here.</string>
     <string name="page_no_lights">No lights found.</string>
     <string name="page_light_left">Left</string>

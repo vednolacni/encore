@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """A small stand-in for Home Assistant for the emulator smoke test (standard library only).
 
-Speaks just enough of Home Assistant's documented APIs for Klangbild:
+Speaks just enough of Home Assistant's documented APIs for Encore:
   WebSocket: auth, subscribe_trigger with a state trigger (the speaker, sun.sun and, in a
     second subscription, the other speakers of its group), unsubscribe_events, call_service
     (music_assistant.get_queue and the media keys), get_config (its units),

@@ -2,13 +2,12 @@ name: Tidy up
 
 # Run by hand from the Actions tab: keeps only the newest releases (the older ones go, and their
 # version tags with them) and deletes the branches that are fully merged into main. Only versions
-# named by the calendar (v2026.11.0) are counted and go; the releases with the old numbers (up to
-# 6.4.0) stay for now, and so do their tags.
+# named by the calendar (v2026.11.0) are counted and go.
 on:
   workflow_dispatch:
     inputs:
       keep:
-        description: "How many of the newest releases to keep (those with the old numbers always stay)"
+        description: "How many of the newest releases to keep"
         required: true
         default: "10"
 
@@ -47,12 +46,12 @@ jobs:
               gh release delete "$tag" -R "$REPO" --yes --cleanup-tag
               echo "Deleted the release $tag and its tag." >> "$GITHUB_STEP_SUMMARY"
             done
-          echo "The newest $KEEP releases are kept, and those with the old numbers too." >> "$GITHUB_STEP_SUMMARY"
+          echo "The newest $KEEP releases are kept." >> "$GITHUB_STEP_SUMMARY"
 
       - name: Delete the tags of releases that are gone
         # A release deleted on the website leaves its tag behind. A tag on a commit newer than the
         # oldest release kept stays, since its release may still be on its way. Only the calendar's
-        # versions count: a tag with the old numbers stays, like its release.
+        # versions count.
         run: |
           releases="$(gh api --paginate "repos/$REPO/releases?per_page=100" --jq '.[].tag_name')"
           oldest="$(gh api --paginate "repos/$REPO/releases?per_page=100" --jq '.[] | select((.draft | not) and (.tag_name | test("^v[0-9]{4}\\."))) | .published_at' | sort | sed -n 1p)"

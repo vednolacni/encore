@@ -1,31 +1,28 @@
-# Klangbild
+# Encore
 
-[![Android TV 9+](https://img.shields.io/badge/Android%20TV%209%2B-182B52?style=flat-square&logo=android&logoColor=A3DEF8)](#devices)
-[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-182B52?style=flat-square&logo=homeassistant&logoColor=A3DEF8)](https://www.home-assistant.io)
+[![Android TV 9+](https://img.shields.io/badge/Android%20TV%209%2B-2A1838?style=flat-square&logo=android&logoColor=FFD6A6)](#devices)
+[![Home Assistant](https://img.shields.io/badge/Home%20Assistant-2A1838?style=flat-square&logo=homeassistant&logoColor=FFD6A6)](https://www.home-assistant.io)
 
 <picture>
-  <source media="(prefers-reduced-motion: no-preference)" srcset="docs/screenshots/film.avif" type="image/avif">
   <source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/mockup-now-playing.jpg">
-  <img src="docs/screenshots/mockup-now-playing-light.jpg" alt="The album cover on a TV next to the song that's playing">
+  <img src="docs/screenshots/mockup-now-playing-light.jpg" alt="The album cover on a TV with the lyrics beside it and the progress bar across the screen">
 </picture>
 
-When you're listening to music at home, the TV usually just sits there. Switched off, it's a big black screen that's hard to ignore, and switched on, it's bright and busy in a way that doesn't suit the music. Klangbild gives it something calm to show instead.
+Encore turns your TV into a music screen for Home Assistant. It shows the album cover with the song under it, the lyrics beside it as they're sung, and a progress bar across the screen with two buttons below, one for the lyrics and one for the settings.
 
-<a href="https://github.com/hazymorning/Klangbild/releases/latest/download/klangbild.apk"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/download.png"><img src="docs/screenshots/download-light.png" width="236" alt="Download for Android TV"></picture></a>
+<a href="https://github.com/vednolacni/encore/releases/latest/download/encore.apk"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/download.png"><img src="docs/screenshots/download-light.png" width="236" alt="Download for Android TV"></picture></a>
 
 ## What it does
 
-Klangbild works with any media player in Home Assistant and shows the album cover with the song's title and artist beside it. Music Assistant adds what's coming up next, lyrics that follow along as the song plays, and chapters for audiobooks and podcasts. Through Sendspin, the TV can also play music itself, in time with your other speakers. And if Home Assistant controls the lights behind your TV, they can take on the colors of the album cover.
+Encore works with any media player in Home Assistant. Music Assistant adds the lyrics, what's coming up next, and chapters for audiobooks and podcasts. Through Sendspin, the TV can also play music itself, in time with your other speakers. And if Home Assistant controls the lights behind your TV, they can take on the colors of the album cover.
 
 During the day the background is light, and at night it turns dark.
 
 ![The same song twice, on the light background by day and on the dark one at night](docs/screenshots/day-and-night.jpg)
 
 > [!NOTE]
-> **Klangbild is being built in two&nbsp;phases.**<br>
-> The first, the Now Playing screen, is nearly finished. Next comes a music visualizer that reacts to all kinds of things while staying calm and tasteful rather than psychedelic. Eventually, it will replace the landscape. Ideas are always welcome in the [Discussions](https://github.com/hazymorning/Klangbild/discussions), and if you'd like the landscape to stay, just say so in the&nbsp;[poll](https://github.com/hazymorning/Klangbild/discussions/51).
-
-<a href="https://github.com/hazymorning/Klangbild/discussions/51"><picture><source media="(max-width: 640px) and (prefers-color-scheme: dark)" srcset="docs/screenshots/poll-small.png"><source media="(max-width: 640px)" srcset="docs/screenshots/poll-small-light.png"><source media="(prefers-color-scheme: dark)" srcset="docs/screenshots/poll.png"><img src="docs/screenshots/poll-light.png" alt="Should the landscape stay? Vote in the poll"></picture></a>
+> **Encore is based on Klangbild.**<br>
+> It began as a fork of [Klangbild](https://github.com/hazymorning/Klangbild) by hazymorning, a calm now playing screen for the TV. Encore keeps its care for the picture and turns it into a player, with the lyrics large on screen and the controls in reach. Thanks to hazymorning for the work it builds&nbsp;on.
 
 ## More
 
@@ -34,11 +31,11 @@ During the day the background is light, and at night it turns dark.
 <summary><b>Compatibility</b></summary>
 <br>
 
-Klangbild runs on TVs and boxes with Android TV 9 or later. Since the TV can stay on for hours, the whole picture drifts slowly by a few pixels, which helps keep an OLED screen from burning in.
+Encore runs on TVs and boxes with Android TV 9 or later. Since the TV can stay on for hours, the whole picture drifts slowly by a few pixels, which helps keep an OLED screen from burning in.
 
 **Streaming sticks with Fire OS or Vega OS**
 
-Many streaming sticks run Fire OS, which is built on Android, and the Android version underneath most likely decides whether Klangbild installs. Fire OS 7 and later are built on Android 9 or newer, which should be enough, though Klangbild hasn't been tried on one of those sticks yet. On Fire OS 6 and earlier it won't install, probably because their Android is too old. The newest sticks run Vega OS, which isn't Android at all, so Android apps most likely won't install on them.
+Fire OS is built on Android, and the Android version underneath most likely decides whether Encore installs. Fire OS 7 and later are built on Android 9 or newer, which should be enough, though Encore hasn't been tried on one of those sticks yet. Vega OS isn't Android at all, so Android apps most likely won't install there.
 
 </details>
 
@@ -49,10 +46,10 @@ Many streaming sticks run Fire OS, which is built on Android, and the Android ve
 You need Home Assistant and a TV or box with Android TV 9 or later.
 
 <details>
-<summary><b>1. Install Klangbild on your TV</b></summary>
+<summary><b>1. Install Encore on your TV</b></summary>
 <br>
 
-Klangbild isn't on Google Play, so you'll need to install the APK from the [latest release](https://github.com/hazymorning/Klangbild/releases/latest) yourself. The easiest way is to open the release page in the free Downloader app, select the APK and allow installs from unknown sources when Android asks.
+Encore isn't on Google Play, so you'll need to install the APK from the [latest release](https://github.com/vednolacni/encore/releases/latest) yourself. The easiest way is to open the release page in the free Downloader app, select the APK and allow installs from unknown sources when Android asks.
 
 </details>
 
@@ -60,10 +57,10 @@ Klangbild isn't on Google Play, so you'll need to install the APK from the [late
 <summary><b>2. Connect it to Home Assistant</b></summary>
 <br>
 
-The first time you open Klangbild, it shows a QR code. Scan it with your phone, sign in to Home Assistant and choose the speaker your music plays on. Everything happens on the phone, because no one likes typing on a remote. On the same page you can add Music Assistant, the lights behind your TV and a few buttons of your own for the quick settings, but all of that can wait.
+The first time you open Encore, it shows a QR code. Scan it with your phone, sign in to Home Assistant and choose the speaker your music plays on. Everything happens on the phone, because no one likes typing on a remote. On the same page you can add Music Assistant, the lights behind your TV and a few buttons of your own for the quick settings, but all of that can wait.
 
 > **Important**<br>
-> If Music Assistant plays your music, your speaker most likely shows up twice in the list, once from its own integration and once from Music Assistant. Choose the one marked Music Assistant, since only that one brings the queue, the lyrics and everything else Music Assistant knows about the song.
+> If Music Assistant plays your music, your speaker most likely shows up twice in the list, once from its own integration and once from Music Assistant. Choose the one marked Music Assistant, since only that one brings the lyrics and everything else Music Assistant knows about the song.
 
 </details>
 
@@ -71,7 +68,7 @@ The first time you open Klangbild, it shows a QR code. Scan it with your phone, 
 <summary><b>3. Open it automatically (optional)</b></summary>
 <br>
 
-If your TV is connected to Home Assistant through the Android Debug Bridge integration, an automation like this one opens Klangbild whenever your speaker starts playing:
+If your TV is connected to Home Assistant through the Android Debug Bridge integration, an automation like this one opens Encore whenever your speaker starts playing:
 
 ```yaml
 triggers:
@@ -83,7 +80,7 @@ actions:
     target:
       entity_id: media_player.tv
     data:
-      source: io.github.hazymorning.klangbild
+      source: io.github.vednolacni.encore
 ```
 
 The two entity IDs are only examples, so put in the ones for your own speaker and TV.
@@ -101,35 +98,10 @@ The two entity IDs are only examples, so put in the ones for your own speaker an
 | --- | --- |
 | OK | Play or pause (hold to open the settings) |
 | Left / Right | Previous or next song |
-| Up | Switch to the landscape |
-| Down | Open the quick settings |
+| Down | Choose the buttons under the bar, and press again for the quick settings |
+| Up / Back | Leave the buttons or the quick settings |
 
 > In the settings you can change what some of the buttons do, for example to have up and down change the volume.
-
-</details>
-
-<details>
-<summary><b>The queue</b></summary>
-<br>
-
-<table>
-  <tr>
-    <td width="33%" valign="top">
-      <img src="docs/screenshots/mockup-queue-off.jpg" alt="The queue off: one large album cover on its own colors, on a TV in a room lit by a lamp and candles"><br>
-      <b>Off</b>
-    </td>
-    <td width="33%" valign="top">
-      <img src="docs/screenshots/mockup-queue-list.jpg" alt="The queue as a list: the next songs with their small covers beside the album cover, on a TV in a room lit by a lamp and candles"><br>
-      <b>List</b>
-    </td>
-    <td width="33%" valign="top">
-      <img src="docs/screenshots/mockup-cover-flow.jpg" alt="The queue in Cover Flow: the covers side by side, on a TV in a room lit by a lamp and candles"><br>
-      <b>Cover Flow</b>
-    </td>
-  </tr>
-</table>
-
-Press the down button on the remote to open the quick settings, where you can choose how much of your queue you see. The list only works once you've added Music Assistant during setup, and until then Cover Flow mostly shows the covers of songs you've already heard.
 
 </details>
 
@@ -137,19 +109,7 @@ Press the down button on the remote to open the quick settings, where you can ch
 <summary><b>Sendspin</b></summary>
 <br>
 
-With Music Assistant 2.10.7 or later, the TV can become one of its speakers and play in time with the others over Sendspin. Once "Play here" is on, under System in the settings or with the box on the setup page, it shows up in Music Assistant under its own name and keeps playing even while Klangbild is closed.
-
-</details>
-
-<details>
-<summary><b>Landscape</b></summary>
-<br>
-
-![The landscape on a winter night, stars and a campfire, on a TV in a room lit by a lamp and candles](docs/screenshots/mockup-landscape.jpg)
-
-There's also a landscape you can switch to, and it changes with the time of day, the seasons and the weather outside.
-
-You'll see morning light, a sunset or stars depending on when you look, and if Home Assistant has a weather entity, it rains on screen when it rains outside. The up button on the remote takes you there at any time, and by default the landscape also comes up by itself after three minutes without music, which you can change or turn off in the settings.
+With Music Assistant 2.10.7 or later, the TV can become one of its speakers and play in time with the others over Sendspin. Once "Play here" is on, under System in the settings or with the box on the setup page, it shows up in Music Assistant under its own name and keeps playing even while Encore is closed.
 
 </details>
 
@@ -157,7 +117,7 @@ You'll see morning light, a sunset or stars depending on when you look, and if H
 <summary><b>Contributing</b></summary>
 <br>
 
-Klangbild is a small project made for the joy of it, and it's meant to be a calm picture of the music in the room rather than another media player. Ideas and wishes are very welcome in the [Discussions](https://github.com/hazymorning/Klangbild/discussions), and bugs in the [issues](https://github.com/hazymorning/Klangbild/issues).
+Encore is a small project made for the joy of it. Ideas and wishes are very welcome in the [Discussions](https://github.com/vednolacni/encore/discussions), and bugs in the [issues](https://github.com/vednolacni/encore/issues).
 
 </details>
 
@@ -165,6 +125,14 @@ Klangbild is a small project made for the joy of it, and it's meant to be a calm
 <summary><b>Data privacy</b></summary>
 <br>
 
-Klangbild has no accounts and doesn't track you. Your Home Assistant login is stored encrypted on the TV and never goes anywhere but your own Home Assistant.
+Encore has no accounts and doesn't track you. Your Home Assistant login is stored encrypted on the TV and never goes anywhere but your own Home Assistant.
+
+</details>
+
+<details>
+<summary><b>License</b></summary>
+<br>
+
+Encore is released under the MIT License, like Klangbild before it, and keeps hazymorning's copyright beside its own (see [LICENSE](LICENSE)).
 
 </details>

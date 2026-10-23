@@ -4,7 +4,7 @@
       Black from the very first frame: window background, launch circle (colorPrimary) and
       splash screen are all black, the icon is transparent. The UI then fades in from black.
     -->
-    <style name="Base.Theme.Klangbild" parent="android:Theme.DeviceDefault.NoActionBar.Fullscreen">
+    <style name="Base.Theme.Encore" parent="android:Theme.DeviceDefault.NoActionBar.Fullscreen">
         <item name="android:windowBackground">@android:color/black</item>
         <item name="android:colorBackground">@android:color/black</item>
         <item name="android:colorPrimary">@android:color/black</item>
@@ -16,5 +16,5 @@
     </style>
 
     <!-- Before Android 12 there is no system splash screen: the black window is the first frame. -->
-    <style name="Theme.Klangbild" parent="Base.Theme.Klangbild" />
+    <style name="Theme.Encore" parent="Base.Theme.Encore" />
 </resources>

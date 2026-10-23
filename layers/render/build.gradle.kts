@@ -1,11 +1,11 @@
 plugins {
-    id("klangbild.android.library")
-    id("klangbild.compose")
-    id("klangbild.robolectric")
+    id("encore.android.library")
+    id("encore.compose")
+    id("encore.robolectric")
 }
 
 android {
-    namespace = "io.github.hazymorning.klangbild.render"
+    namespace = "io.github.vednolacni.encore.render"
 }
 
 dependencies {

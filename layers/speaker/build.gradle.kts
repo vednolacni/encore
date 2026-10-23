@@ -1,19 +1,19 @@
-import io.github.hazymorning.klangbild.gradle.reads
+import io.github.vednolacni.encore.gradle.reads
 
 plugins {
-    id("klangbild.android.library")
-    id("klangbild.robolectric")
+    id("encore.android.library")
+    id("encore.robolectric")
 }
 
 android {
-    namespace = "io.github.hazymorning.klangbild.speaker"
+    namespace = "io.github.vednolacni.encore.speaker"
 
     testOptions {
         unitTests.all {
             // The speaker against aiosendspin, the server Music Assistant runs (ci/sendspin_server.py):
-            // -Pklangbild.sendspin=/path/to/a/python/with/aiosendspin
-            providers.gradleProperty("klangbild.sendspin").orNull?.let { python -> it.systemProperty("klangbild.sendspin", python) }
-            it.reads("klangbild.sendspinServer", layout.settingsDirectory.file("ci/sendspin_server.py"))
+            // -Pencore.sendspin=/path/to/a/python/with/aiosendspin
+            providers.gradleProperty("encore.sendspin").orNull?.let { python -> it.systemProperty("encore.sendspin", python) }
+            it.reads("encore.sendspinServer", layout.settingsDirectory.file("ci/sendspin_server.py"))
         }
     }
 }

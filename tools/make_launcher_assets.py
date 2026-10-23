@@ -3,9 +3,9 @@
 
 Usage: python3 tools/make_launcher_assets.py   (needs Pillow)
 
-The logo is tools/logo.svg: four rounded squares, each turned a little further toward the
-middle, a ring and a light dot, blue on night blue. It is drawn here from the SVG at any size,
-never scaled from a bitmap.
+The logo is tools/logo.svg: a cover's rounded square with a warm light in it, and under it a
+progress bar part of the way along, peach on a deep plum. It is drawn here from the SVG at any
+size, never scaled from a bitmap.
 """
 import math
 import os
@@ -20,7 +20,7 @@ RES = os.path.join(ROOT, "androidApp", "src", "main", "res")
 FONT = os.path.join(ROOT, "layers", "ui", "src", "main", "res", "font", "jost.ttf")
 LOGO = os.path.join(ROOT, "tools", "logo.svg")
 
-INK = (232, 242, 255)
+INK = (252, 238, 226)
 
 
 def _color(value):
@@ -194,7 +194,7 @@ def banner(path, w=320, h=180):
     mark = logo(side, background=None)
     f = jost(int(37 * s))
     d = ImageDraw.Draw(img)
-    text = "Klangbild"
+    text = "Encore"
     tw = d.textlength(text, font=f)
     gap = int(17 * s)
     x0 = int((w * s - (side + gap + tw)) / 2)

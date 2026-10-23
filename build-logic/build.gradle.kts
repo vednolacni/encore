@@ -17,19 +17,19 @@ dependencies {
 gradlePlugin {
     plugins {
         register("androidApplication") {
-            id = "klangbild.android.application"
+            id = "encore.android.application"
             implementationClass = "AndroidApplicationConventionPlugin"
         }
         register("androidLibrary") {
-            id = "klangbild.android.library"
+            id = "encore.android.library"
             implementationClass = "AndroidLibraryConventionPlugin"
         }
         register("compose") {
-            id = "klangbild.compose"
+            id = "encore.compose"
             implementationClass = "ComposeConventionPlugin"
         }
         register("robolectric") {
-            id = "klangbild.robolectric"
+            id = "encore.robolectric"
             implementationClass = "RobolectricConventionPlugin"
         }
     }

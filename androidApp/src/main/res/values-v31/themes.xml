@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <!-- From Android 12 the system shows a splash screen first: black too, without an icon. -->
-    <style name="Theme.Klangbild" parent="Base.Theme.Klangbild">
+    <style name="Theme.Encore" parent="Base.Theme.Encore">
         <item name="android:windowSplashScreenBackground">@android:color/black</item>
         <item name="android:windowSplashScreenAnimatedIcon">@android:color/transparent</item>
     </style>

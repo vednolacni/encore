@@ -1,6 +1,6 @@
 import com.android.build.api.dsl.CommonExtension
-import io.github.hazymorning.klangbild.gradle.libs
-import io.github.hazymorning.klangbild.gradle.library
+import io.github.vednolacni.encore.gradle.libs
+import io.github.vednolacni.encore.gradle.library
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.dependencies

@@ -1,7 +1,7 @@
 plugins {
-    id("klangbild.android.library")
+    id("encore.android.library")
 }
 
 android {
-    namespace = "io.github.hazymorning.klangbild.math"
+    namespace = "io.github.vednolacni.encore.math"
 }

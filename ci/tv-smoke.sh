@@ -8,7 +8,7 @@
 # screenshots, logcat and gfxinfo in smoke/.
 set -u
 APK="$1"
-PKG=io.github.hazymorning.klangbild
+PKG=io.github.vednolacni.encore
 HERE="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p smoke
 
@@ -30,8 +30,8 @@ adb exec-out screencap -p > smoke/1-playing.png
 if grep -q "subscribe_trigger" smoke/fake_ha.log; then
   echo "First start: connected."
 else
-  echo "Note: on the first start Klangbild did not connect (setup page):"
-  adb logcat -d -s Klangbild:I | tail -20
+  echo "Note: on the first start Encore did not connect (setup page):"
+  adb logcat -d -s Encore:I | tail -20
 fi
 # A key press brings hidden parts (time, place, progress) back for a moment.
 adb shell input keyevent KEYCODE_DPAD_UP
@@ -83,7 +83,7 @@ PID="$(adb shell pidof "$PKG" | tr -d '\r')"
 adb logcat -d > smoke/logcat.txt
 adb shell dumpsys gfxinfo "$PKG" > smoke/gfxinfo.txt || true
 
-# Only Klangbild's own crashes count: the Android TV 9 image's Live TV app crashes by itself.
+# Only Encore's own crashes count: the Android TV 9 image's Live TV app crashes by itself.
 if grep -q "AndroidRuntime: Process: $PKG, " smoke/logcat.txt; then
   echo "The app crashed:"
   grep -B 1 -A 30 "AndroidRuntime: Process: $PKG, " smoke/logcat.txt | head -60
@@ -94,7 +94,7 @@ if [ -z "$PID" ]; then
   exit 1
 fi
 if ! grep -q "subscribe_trigger" smoke/fake_ha.log || ! grep -q "rest /api/states/media_player.living_room" smoke/fake_ha.log; then
-  echo "Klangbild did not connect to the stand-in Home Assistant:"
+  echo "Encore did not connect to the stand-in Home Assistant:"
   cat smoke/fake_ha.log
   exit 1
 fi
@@ -109,8 +109,8 @@ if [ "$SPEAKER_OK" != skipped ]; then
   grep -E "^(PLAYER_READY|STREAM_|SENT_CHUNKS|CLIENT_DISCONNECTED)" smoke/sendspin.log
 fi
 if ! grep -q "get_config" smoke/fake_ha.log; then
-  echo "Note: Klangbild did not ask Home Assistant where it stands."
+  echo "Note: Encore did not ask Home Assistant where it stands."
 fi
 echo "What the app logged:"
-grep " Klangbild: " smoke/logcat.txt | tail -20 || true
+grep " Encore: " smoke/logcat.txt | tail -20 || true
 echo "Smoke test passed (PID $PID)."

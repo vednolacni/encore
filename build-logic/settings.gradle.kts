@@ -1,4 +1,4 @@
-// The build's own plugins: what every module of Klangbild has in common, set in one place.
+// The build's own plugins: what every module of Encore has in common, set in one place.
 pluginManagement {
     repositories {
         // Google's official Maven Central mirror first, as in the main build; the plugin portal

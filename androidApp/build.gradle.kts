@@ -1,12 +1,12 @@
-import io.github.hazymorning.klangbild.gradle.reads
+import io.github.vednolacni.encore.gradle.reads
 import java.time.Instant
 import java.time.ZoneOffset
 import java.time.format.DateTimeFormatter
 
 plugins {
-    id("klangbild.android.application")
-    id("klangbild.compose")
-    id("klangbild.robolectric")
+    id("encore.android.application")
+    id("encore.compose")
+    id("encore.robolectric")
 }
 
 // versionCode counts up by itself: the minutes from 2026-01-01 to the HEAD commit. It is the
@@ -24,7 +24,7 @@ val versionEpochSeconds = 1767225600L // 2026-01-01T00:00:00Z
 val autoVersionCode = ((headCommitEpochSeconds - versionEpochSeconds) / 60L).coerceAtLeast(1L).toInt()
 // A release build from a tag gets the tag's name ("1.0.0", passed by CI); every other build
 // is named after its commit date and hash.
-val autoVersionName: String = providers.gradleProperty("klangbild.versionName").orNull?.takeIf { it.isNotBlank() }
+val autoVersionName: String = providers.gradleProperty("encore.versionName").orNull?.takeIf { it.isNotBlank() }
     ?: (
         DateTimeFormatter.ofPattern("yyyy.MM.dd")
             .withZone(ZoneOffset.UTC)
@@ -32,10 +32,10 @@ val autoVersionName: String = providers.gradleProperty("klangbild.versionName").
         )
 
 android {
-    namespace = "io.github.hazymorning.klangbild"
+    namespace = "io.github.vednolacni.encore"
 
     defaultConfig {
-        applicationId = "io.github.hazymorning.klangbild"
+        applicationId = "io.github.vednolacni.encore"
         versionCode = autoVersionCode
         versionName = autoVersionName
         // No abiFilters on purpose: the app ships no native code of its own, and any
@@ -63,11 +63,11 @@ android {
 
     testOptions {
         unitTests.all {
-            // FirstLaunchTest against the stand-in Home Assistant (ci/fake_ha.py): -Pklangbild.fakeHa=http://127.0.0.1:8123
-            providers.gradleProperty("klangbild.fakeHa").orNull?.let { url -> it.systemProperty("klangbild.fakeHa", url) }
+            // FirstLaunchTest against the stand-in Home Assistant (ci/fake_ha.py): -Pencore.fakeHa=http://127.0.0.1:8123
+            providers.gradleProperty("encore.fakeHa").orNull?.let { url -> it.systemProperty("encore.fakeHa", url) }
             // LayersTest reads the app's own code and every layer's.
-            it.reads("klangbild.appCode", layout.projectDirectory.dir("src/main/java/io/github/hazymorning/klangbild"), "**/*.kt")
-            it.reads("klangbild.layers", layout.settingsDirectory.dir("layers"), "*/src/main/**/*.kt")
+            it.reads("encore.appCode", layout.projectDirectory.dir("src/main/java/io/github/vednolacni/encore"), "**/*.kt")
+            it.reads("encore.layers", layout.settingsDirectory.dir("layers"), "*/src/main/**/*.kt")
         }
     }
 

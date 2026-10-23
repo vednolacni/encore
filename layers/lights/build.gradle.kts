@@ -1,9 +1,9 @@
 plugins {
-    id("klangbild.android.library")
+    id("encore.android.library")
 }
 
 android {
-    namespace = "io.github.hazymorning.klangbild.lights"
+    namespace = "io.github.vednolacni.encore.lights"
 }
 
 dependencies {

@@ -1,7 +1,7 @@
 import com.android.build.api.dsl.ApplicationExtension
-import io.github.hazymorning.klangbild.gradle.configureAndroid
-import io.github.hazymorning.klangbild.gradle.libs
-import io.github.hazymorning.klangbild.gradle.number
+import io.github.vednolacni.encore.gradle.configureAndroid
+import io.github.vednolacni.encore.gradle.libs
+import io.github.vednolacni.encore.gradle.number
 import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.kotlin.dsl.configure

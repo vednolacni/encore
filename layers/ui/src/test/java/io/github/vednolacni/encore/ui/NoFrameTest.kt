@@ -1,0 +1,67 @@
+package io.github.vednolacni.encore.ui
+
+import android.graphics.Bitmap
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.test.captureToImage
+import androidx.compose.ui.test.onRoot
+import androidx.compose.ui.graphics.asAndroidBitmap
+import androidx.test.ext.junit.runners.AndroidJUnit4
+import com.google.common.truth.Truth.assertWithMessage
+import io.github.vednolacni.encore.art.SyntheticCover
+import io.github.vednolacni.encore.color.Appearance
+import io.github.vednolacni.encore.ui.stage.Stage
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.annotation.Config
+import org.robolectric.annotation.GraphicsMode
+import kotlin.math.abs
+
+/**
+ * Nothing frames a cover on paper: no shadow, no line, no lighter or darker box. Around the
+ * print the paper is plain, measured on rendered pixels.
+ */
+@RunWith(AndroidJUnit4::class)
+@GraphicsMode(GraphicsMode.Mode.NATIVE)
+@Config(sdk = [34], qualifiers = "w960dp-h540dp-land-xhdpi")
+class NoFrameTest {
+    @get:Rule
+    val compose = composeRule()
+
+    private var shown by androidx.compose.runtime.mutableStateOf<(@androidx.compose.runtime.Composable () -> Unit)?>(null)
+
+    private fun render(content: @androidx.compose.runtime.Composable () -> Unit): Bitmap {
+        if (shown == null) compose.setContent { shown?.let { Fixtures.Still(it) } }
+        shown = content
+        compose.waitForIdle()
+        return compose.onRoot().captureToImage().asAndroidBitmap()
+    }
+
+    /** The largest difference (levels, any channel) from the paper in the boxes (px: x0, y0, x1, y1). */
+    private fun deviation(bmp: Bitmap, boxes: List<IntArray>): Int {
+        val paper = bmp.getPixel(boxes[0][0], boxes[0][1])
+        var worst = 0
+        for (b in boxes) for (y in b[1] until b[3]) for (x in b[0] until b[2]) {
+            val p = bmp.getPixel(x, y)
+            for (shift in intArrayOf(16, 8, 0)) worst = maxOf(worst, abs(((p shr shift) and 0xFF) - ((paper shr shift) and 0xFF)))
+        }
+        return worst
+    }
+
+    @Test
+    fun `around the single print the paper is plain`() {
+        for (cover in listOf(SyntheticCover.NIGHT_DRIVE, SyntheticCover.WHITE_SPACE, SyntheticCover.BAUHAUS)) {
+            val bmp = render { Stage(Fixtures.model(Fixtures.track(cover), next = Fixtures.spiegel, group = "Wohnzimmer", appearance = Appearance.LIGHT)) }
+            // The artwork: 290 dp at 88 dp from the left and 44 dp from the top, at 2 px a dp. A ring from 3 to 40 dp around it.
+            val l = 176; val t = 88; val r = 756; val b = 668
+            val boxes = listOf(
+                intArrayOf(l - 80, t - 80, r + 80, t - 6),
+                intArrayOf(l - 80, b + 6, r + 80, b + 80),
+                intArrayOf(l - 80, t, l - 6, b),
+                intArrayOf(r + 6, t, r + 80, b),
+            )
+            assertWithMessage("$cover: paper round the print").that(deviation(bmp, boxes)).isAtMost(3)
+        }
+    }
+}

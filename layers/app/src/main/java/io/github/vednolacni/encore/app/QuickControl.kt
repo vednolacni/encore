@@ -1,0 +1,416 @@
+package io.github.vednolacni.encore.app
+
+import io.github.vednolacni.encore.domain.ActionKind
+import io.github.vednolacni.encore.config.ActionState
+import io.github.vednolacni.encore.config.FavoriteState
+import io.github.vednolacni.encore.config.LyricsChoice
+import io.github.vednolacni.encore.domain.QuickAction
+import io.github.vednolacni.encore.config.QuickContext
+import io.github.vednolacni.encore.config.QuickItem
+import io.github.vednolacni.encore.config.QuickKey
+import io.github.vednolacni.encore.config.QuickMenu
+import io.github.vednolacni.encore.config.QuickRow
+import io.github.vednolacni.encore.config.RoomLightBrightness
+import io.github.vednolacni.encore.domain.MaLink
+import io.github.vednolacni.encore.domain.MediaKind
+import io.github.vednolacni.encore.domain.Screen
+import io.github.vednolacni.encore.domain.TrackInfo
+import android.util.Log
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+
+/**
+ * The quick settings while they are open (down on the remote): which entry the cursor is on,
+ * and what OK does to it. Untouched, they close after [IDLE_MS].
+ *
+ * Two of them, the song's words and the way into the settings, stand on the stage as buttons
+ * all the time. Down chooses among those first ([compact]); down again opens the whole row.
+ */
+internal class QuickControl(private val host: ControllerHost) {
+    /** The entry the cursor is on, by what it is, so entries coming and going never move it. */
+    @Volatile private var cursor: QuickKey? = null
+    @Volatile private var touchedAt = 0L
+
+    /** The lights' level before they were switched off from the quick settings. */
+    private var lightsBefore = RoomLightBrightness.DEFAULT
+
+    /** The current song's way into the favorites (by the song's key). */
+    @Volatile private var favorite: Pair<String, FavoriteState>? = null
+
+    /** Shuffle just asked for, and until when it is shown before the player has reported it. */
+    @Volatile private var shuffleWanted: Pair<Boolean, Long>? = null
+
+    /** The buttons whose call is out, by their place among the buttons: OK waits for the answer. */
+    private val running = HashSet<Int>()
+
+    /** How each button's last call went, by its place, and until when it says so. */
+    private val outcome = HashMap<Int, Pair<ActionState, Long>>()
+
+    /** A switch just turned from the quick settings: shown as asked until Home Assistant reports it, or a while. */
+    private val switchWanted = HashMap<String, Pair<Boolean, Long>>()
+
+    /** The party's code is to show (OK on "Party code"); a party that ends switches it off. */
+    @Volatile private var partyOn = false
+
+    /** The link guests open, while the code is to show: asked when it is switched on, and again now and then (a code expires). */
+    @Volatile private var partyUrl: String? = null
+    private var partyJob: Job? = null
+
+    /** Only the player's buttons are open, not the whole row. */
+    @Volatile private var compact = false
+
+    val isOpen: Boolean get() = cursor != null
+
+    /** The player's buttons are open (not the whole row): down again opens the row. */
+    val isCompact: Boolean get() = cursor != null && compact
+
+    /** Opens the quick settings, or with [buttons] only the player's buttons, on the first entry. */
+    fun open(menuOpen: Boolean, buttons: Boolean = false) {
+        synchronized(host.lock) {
+            if (menuOpen || cursor != null) return
+            compact = buttons
+            cursor = rows().first().key
+            touchedAt = host.now()
+            host.recompute()
+        }
+    }
+
+    /** Closes the quick settings (up, back, after a while alone). */
+    fun close() {
+        synchronized(host.lock) {
+            cursor = null
+            compact = false
+        }
+        host.recompute()
+    }
+
+    /** From the player's buttons to the whole row (down again), the cursor staying on its entry. */
+    fun expand() {
+        synchronized(host.lock) {
+            if (cursor == null || !compact) return
+            compact = false
+            touchedAt = host.now()
+            host.recompute()
+        }
+    }
+
+    /** A key in the quick settings that changes nothing: they stay open a while longer. */
+    fun touch() {
+        touchedAt = host.now()
+    }
+
+    /** Left (-1) or right (+1) along the quick settings; it stops at their ends. */
+    fun move(delta: Int) {
+        synchronized(host.lock) {
+            val c = cursor ?: return
+            val keys = rows().map { it.key }
+            cursor = keys[(indexOf(keys, c) + delta).coerceIn(0, keys.size - 1)]
+            touchedAt = host.now()
+            host.recompute()
+        }
+    }
+
+    /** OK on the entry under the cursor: its next value, or what it says. */
+    fun change() {
+        val row = synchronized(host.lock) {
+            val c = cursor ?: return
+            touchedAt = host.now()
+            val rows = rows()
+            rows.getOrNull(indexOf(rows.map { it.key }, c))
+        } ?: return
+        when (row.item) {
+            // On and off, at once: the stage changes its text as it does for a new song. A quiet On
+            // (a song without words) goes off too.
+            QuickItem.LYRICS -> host.settings.let { s -> host.applySettings(s.copy(lyrics = !s.lyrics)) }
+            QuickItem.FAVORITE -> addFavorite()
+            QuickItem.LIGHTS -> {
+                // On and off: off remembers the level, on brings it back.
+                val s = host.settings
+                val level = if (s.roomLightBrightness == RoomLightBrightness.OFF) lightsBefore else RoomLightBrightness.OFF
+                if (s.roomLightBrightness != RoomLightBrightness.OFF) lightsBefore = s.roomLightBrightness
+                host.applySettings(s.copy(roomLightBrightness = level))
+            }
+            QuickItem.SHUFFLE -> toggleShuffle()
+            QuickItem.PARTY -> toggleParty()
+            QuickItem.ACTION -> host.settings.quickActions.getOrNull(row.key.action)?.let { runAction(row.key.action, it) }
+            // The way into all settings: the row makes way for the menu.
+            QuickItem.SETTINGS -> {
+                close()
+                host.openMenu()
+            }
+        }
+    }
+
+    /**
+     * Closes quick settings nobody has touched for [IDLE_MS], or that the settings menu replaced
+     * (called under the lock).
+     */
+    fun expire(t: Long, menuOpen: Boolean) {
+        if (cursor != null && (t - touchedAt > IDLE_MS || menuOpen)) {
+            cursor = null
+            compact = false
+        }
+    }
+
+    /** The quick settings as they show for [screen], null while they are closed (called under the lock). */
+    fun state(screen: Screen): QuickState? {
+        val c = cursor ?: return null
+        val rows = rows(context(screen))
+        return QuickState(rows, indexOf(rows.map { it.key }, c), compact)
+    }
+
+    /**
+     * The player's buttons as they stand on [screen]: the song's words (while they can be chosen)
+     * and the way into the settings, the one the cursor is on chosen while they are open, none
+     * otherwise (called under the lock).
+     */
+    fun buttons(screen: Screen): QuickState {
+        val rows = rows(context(screen), compact = true)
+        val c = cursor?.takeIf { compact }
+        return QuickState(rows, if (c == null) -1 else indexOf(rows.map { it.key }, c), compact = true)
+    }
+
+    /** Adds what plays to Music Assistant's favorites; the quick settings say how it went. */
+    private fun addFavorite() {
+        val track = (host.ui.screen as? Screen.Stage)?.track ?: return
+        val src = host.source ?: return
+        synchronized(host.lock) {
+            val state = favoriteState(track)
+            if (state == FavoriteState.BUSY || state == FavoriteState.DONE) return
+            favorite = track.key to FavoriteState.BUSY
+        }
+        host.recompute()
+        host.scope.launch {
+            val result = src.favorite()
+            val ok = result.isSuccess
+            // What Home Assistant or Music Assistant answered, for `adb logcat -s Encore`.
+            result.exceptionOrNull()?.let { Log.w(NowPlayingController.TAG, "Favorite failed: ${it.message ?: it.javaClass.simpleName}") }
+            synchronized(host.lock) {
+                if (favorite?.first == track.key) favorite = track.key to if (ok) FavoriteState.DONE else FavoriteState.FAILED
+            }
+            host.recompute()
+        }
+    }
+
+    /**
+     * Does what the button at [index] says, once at a time. A switch shows its new state at once
+     * (Home Assistant reports it a moment later); the others say how it went for [RESULT_MS].
+     */
+    private fun runAction(index: Int, action: QuickAction) {
+        val src = host.source ?: return
+        val kind = action.kind ?: return
+        val entity = action.entity
+        synchronized(host.lock) {
+            if (index in running) return
+            if (kind == ActionKind.TOGGLE) {
+                val on = switchShown(entity) ?: return
+                switchWanted[entity] = !on to host.now() + SWITCH_TRUST_MS
+            }
+            running += index
+            outcome.remove(index)
+        }
+        host.recompute()
+        host.scope.launch {
+            val ok = src.run(action)
+            synchronized(host.lock) {
+                running -= index
+                if (!ok) switchWanted.remove(entity)
+                // A switch tells by its state; only a failure is said in words.
+                if (kind != ActionKind.TOGGLE || !ok) outcome[index] = (if (ok) ActionState.DONE else ActionState.FAILED) to host.now() + RESULT_MS
+            }
+            host.recompute()
+            // Back to what the button does once the word has been read.
+            delay(RESULT_MS + 50)
+            host.recompute()
+        }
+    }
+
+    /**
+     * Shows the party's code, or no longer. On, its link is asked for at once and again every
+     * [PARTY_URL_MS] (soon again when no answer came); a link once had stays until a new one
+     * comes.
+     */
+    private fun toggleParty() {
+        val src = host.source ?: return
+        synchronized(host.lock) {
+            partyOn = !partyOn
+            partyJob?.cancel()
+            partyJob = null
+            partyUrl = null
+            if (partyOn) {
+                partyJob = host.scope.launch {
+                    while (true) {
+                        val url = src.partyUrl()
+                        synchronized(host.lock) { if (partyOn && url != null) partyUrl = url }
+                        host.recompute()
+                        delay(if (url != null) PARTY_URL_MS else PARTY_RETRY_MS)
+                    }
+                }
+            }
+        }
+        host.recompute()
+    }
+
+    /**
+     * Whether the party's code is to show, with a party playing [here]: a party that has ended
+     * (or plays elsewhere) switches it off, so the next one starts without it (called under the lock).
+     */
+    fun partyWanted(here: Boolean): Boolean {
+        if (!here && partyOn) {
+            partyOn = false
+            partyUrl = null
+            partyJob?.cancel()
+            partyJob = null
+        }
+        return partyOn
+    }
+
+    /** The link to show as a code now, once it has come (called under the lock, after [partyWanted]). */
+    val partyCode: String? get() = partyUrl.takeIf { partyOn }
+
+    /**
+     * Turns shuffle the other way: shown at once and sent to the player, which reports it back in
+     * a moment. Until then (a few seconds at most) the quick settings show what was asked for.
+     */
+    private fun toggleShuffle() {
+        val src = host.source ?: return
+        val on = synchronized(host.lock) {
+            val now = shuffleShown() ?: return
+            shuffleWanted = !now to host.now() + SHUFFLE_TRUST_MS
+            !now
+        }
+        host.recompute()
+        host.scope.launch {
+            if (!src.shuffle(on)) synchronized(host.lock) { shuffleWanted = null }
+            host.recompute()
+        }
+    }
+
+    /** Shuffle as the quick settings show it: what was just asked for, else what the player says. */
+    private fun shuffleShown(): Boolean? {
+        val reported = host.ui.source.player?.shuffle ?: return null
+        val wanted = shuffleWanted
+        if (wanted == null || host.now() > wanted.second || wanted.first == reported) {
+            shuffleWanted = null
+            return reported
+        }
+        return wanted.first
+    }
+
+    /** Whether the switch [entity] shows as on: what was just asked for, else what Home Assistant says; null without a state. */
+    private fun switchShown(entity: String): Boolean? {
+        val reported = when (host.ui.source.entities[entity]?.state) {
+            "on" -> true
+            "off" -> false
+            else -> null
+        }
+        val wanted = switchWanted[entity]
+        if (wanted == null || host.now() > wanted.second || wanted.first == reported) {
+            switchWanted.remove(entity)
+            return reported
+        }
+        return wanted.first
+    }
+
+    /**
+     * How each button stands now, by its place among the buttons. A button whose entity Home
+     * Assistant does not know (yet), or has as unavailable, is left out; so is a switch that is
+     * neither on nor off, and a button whose condition does not hold (unless it is just saying
+     * how its call went: what it did may have ended the condition).
+     */
+    private fun actionStates(): Map<Int, ActionState> {
+        val entities = host.ui.source.entities
+        val t = host.now()
+        val out = HashMap<Int, ActionState>()
+        for ((i, a) in host.settings.quickActions.withIndex()) {
+            val kind = a.kind ?: continue
+            val state = entities[a.entity]?.state ?: continue
+            if (state == UNAVAILABLE) continue
+            val said = outcome[i]?.takeIf { t < it.second }?.first
+            val c = a.condition
+            if (c != null && i !in running && said == null && !entities[c.entity].let { e -> c.holds(e?.state, e?.attributes) }) continue
+            out[i] = when {
+                said != null -> said
+                kind == ActionKind.TOGGLE -> when (switchShown(a.entity)) {
+                    true -> ActionState.ON
+                    false -> ActionState.OFF
+                    null -> continue
+                }
+                else -> ActionState.READY
+            }
+        }
+        return out
+    }
+
+    /**
+     * The lyrics entry for [track]: only for a song, while Music Assistant (where the words come
+     * from) is connected. While it is on and Music Assistant has no synced words for the song (or
+     * the song has no length for them to follow), NONE: still On, said quietly.
+     */
+    private fun lyricsChoice(track: TrackInfo): LyricsChoice? {
+        if (track.kind != MediaKind.MUSIC || host.ui.source.ma != MaLink.CONNECTED) return null
+        if (!host.settings.lyrics) return LyricsChoice.OFF
+        val known = host.ui.source.lyrics?.takeIf { it.key == track.key }
+        return if ((known != null && known.lyrics == null) || track.durationMs == null) LyricsChoice.NONE else LyricsChoice.ON
+    }
+
+    /**
+     * How far [track]'s way into the favorites has come: known from Music Assistant, else asked
+     * here. Music Assistant's word wins, so a song that became a favorite after all says so.
+     */
+    private fun favoriteState(track: TrackInfo): FavoriteState =
+        if (track.favorite) FavoriteState.DONE else favorite?.takeIf { it.first == track.key }?.second ?: FavoriteState.NONE
+
+    /**
+     * What the quick settings need to know: by default what the screen shows now, while working out
+     * the screen what it is about to show.
+     */
+    private fun context(screen: Screen = host.ui.screen): QuickContext {
+        val track = (screen as? Screen.Stage)?.track
+        return QuickContext(
+            music = track != null,
+            favorite = track?.takeIf { host.ui.source.favorites }?.let { favoriteState(it) },
+            shuffle = shuffleShown(),
+            actions = actionStates(),
+            lyrics = track?.let { lyricsChoice(it) },
+            party = partyOn.takeIf { host.ui.source.party },
+        )
+    }
+
+    private fun rows(ctx: QuickContext = context(), compact: Boolean = this.compact): List<QuickRow> =
+        QuickMenu.rows(host.settings, ctx, host.texts).let { all -> if (compact) all.filter { it.item in QuickMenu.PLAYER_BUTTONS } else all }
+
+    /**
+     * Where [key] stands among [keys]; once it is gone (the favorite when the music stops), the
+     * entry that took its place.
+     */
+    private fun indexOf(keys: List<QuickKey>, key: QuickKey): Int {
+        keys.indexOf(key).takeIf { it >= 0 }?.let { return it }
+        val after = keys.indexOfFirst { it.item.ordinal > key.item.ordinal || (it.item == key.item && it.action > key.action) }
+        return after.takeIf { it >= 0 } ?: (keys.size - 1)
+    }
+
+    companion object {
+        /** Untouched quick settings close after this long: they are for a moment's choice. */
+        const val IDLE_MS = 20_000L
+
+        /** Shuffle just asked for is shown this long before the player has reported it. */
+        const val SHUFFLE_TRUST_MS = 6_000L
+
+        /** A switch just turned is shown as asked this long before Home Assistant has reported it. */
+        const val SWITCH_TRUST_MS = 6_000L
+
+        /** How long a button says how its call went before it says again what it does. */
+        const val RESULT_MS = 4_000L
+
+        /** While the party's code shows, its link is asked for again this often: Music Assistant renews an expired code. */
+        const val PARTY_URL_MS = 60_000L
+
+        /** When the party's link could not be had, it is asked for again after this long. */
+        const val PARTY_RETRY_MS = 5_000L
+
+        /** Home Assistant's state for an entity that is there but cannot be used. */
+        private const val UNAVAILABLE = "unavailable"
+    }
+}

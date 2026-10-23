@@ -1,8 +1,8 @@
 plugins {
-    id("klangbild.android.library")
-    id("klangbild.compose")
+    id("encore.android.library")
+    id("encore.compose")
 }
 
 android {
-    namespace = "io.github.hazymorning.klangbild.sound"
+    namespace = "io.github.vednolacni.encore.sound"
 }

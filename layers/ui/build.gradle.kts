@@ -1,27 +1,27 @@
-import io.github.hazymorning.klangbild.gradle.reads
+import io.github.vednolacni.encore.gradle.reads
 
 plugins {
-    id("klangbild.android.library")
-    id("klangbild.compose")
-    id("klangbild.robolectric")
+    id("encore.android.library")
+    id("encore.compose")
+    id("encore.robolectric")
     alias(libs.plugins.roborazzi)
 }
 
 android {
-    namespace = "io.github.hazymorning.klangbild.ui"
+    namespace = "io.github.vednolacni.encore.ui"
 
     testOptions {
         unitTests.all {
             // Two JVMs share the Robolectric classes; the screenshot classes run side by side.
             it.maxParallelForks = 2
             // The picture tests render how the screens look and check nothing themselves (see
-            // Pictures in the tests). The everyday run leaves them out; -Pklangbild.pictures
+            // Pictures in the tests). The everyday run leaves them out; -Pencore.pictures
             // runs them too, as CI's picture comparison does.
-            if (!providers.gradleProperty("klangbild.pictures").isPresent) {
-                it.useJUnit { excludeCategories("io.github.hazymorning.klangbild.Pictures") }
+            if (!providers.gradleProperty("encore.pictures").isPresent) {
+                it.useJUnit { excludeCategories("io.github.vednolacni.encore.Pictures") }
             }
             // LanguageTest reads the words as they are written, in English and German.
-            it.reads("klangbild.strings", layout.settingsDirectory.dir("layers/text/src/main/res"), "values*/strings.xml")
+            it.reads("encore.strings", layout.settingsDirectory.dir("layers/text/src/main/res"), "values*/strings.xml")
         }
     }
 }

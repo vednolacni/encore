@@ -155,7 +155,7 @@ async def scenario(args: argparse.Namespace, server: SendspinServer, connected: 
 
 async def run(args: argparse.Namespace) -> int:
     loop = asyncio.get_running_loop()
-    server = SendspinServer(loop, Identity.generate(), "Klangbild test server",
+    server = SendspinServer(loop, Identity.generate(), "Encore test server",
                             pairing_store=InMemoryServerPairingStore(), allow_unencrypted=False,
                             allow_noncompliant_clients=False)
     connected: asyncio.Future = loop.create_future()
