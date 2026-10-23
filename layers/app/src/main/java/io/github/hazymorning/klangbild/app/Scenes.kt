@@ -27,16 +27,13 @@ data class Look(val appearance: Appearance, val wallTint: Float, val coverField:
             (appearance == Appearance.DARK && !coverField || scene.wallTint == wallTint)
 }
 
-/**
- * What scenes are built for: the screen, and Cover Flow's grid, the player's or the cover's own.
- * Another frame means new scenes.
- */
-data class Frame(val screen: ScreenSpec, val flow: Boolean, val player: Boolean = false)
+/** What scenes are built for: the screen. Another frame means new scenes. */
+data class Frame(val screen: ScreenSpec)
 
 /**
  * Prepares the stage's scenes (cover, palette, light; see [SceneBuilder]) off the main thread,
  * one at a time, and keeps the most recent ones: a scene for a track that comes back (the next
- * song, a step back, the cards of the cover flow) is there at once. A scene whose light no
+ * song, a step back) is there at once. A scene whose light no
  * longer fits is re-lit from what it has, without loading the cover again. Scenes are kept by
  * [TrackInfo.sceneKey]: a station's song gets a new scene when its own picture arrives.
  */
@@ -51,10 +48,9 @@ class Scenes(
 
     /**
      * What scenes are built for now. Another frame lets go of every scene, and of those still
-     * being made for the frame left: a switch to Cover Flow and straight back never waits for a
-     * scene nobody will show, and its own scene starts at once.
+     * being made for the frame left, so no scene is made that nobody will show.
      */
-    @Volatile var frame = Frame(ScreenSpec.TV_1080, flow = false)
+    @Volatile var frame = Frame(ScreenSpec.TV_1080)
         set(value) {
             synchronized(cache) {
                 if (value != field) {
@@ -66,8 +62,8 @@ class Scenes(
             }
         }
 
-    /** How many scenes are kept: the cover flow needs a whole strip of them. */
-    private val capacity get() = if (frame.flow) 10 else 3
+    /** How many scenes are kept. */
+    private val capacity = 3
 
     /** The scene for [track] if it is ready and lit as [look]. */
     fun ready(track: TrackInfo, look: Look): ArtworkScene? =
@@ -144,8 +140,6 @@ class Scenes(
                 screen = frame.screen,
                 appearance = look.appearance,
                 wallTint = look.wallTint,
-                flow = frame.flow,
-                player = frame.player,
                 coverField = look.coverField,
             )
         }

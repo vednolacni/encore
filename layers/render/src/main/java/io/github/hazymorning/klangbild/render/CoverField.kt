@@ -15,6 +15,7 @@ import kotlin.math.hypot
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.pow
+import kotlin.math.roundToInt
 import kotlin.math.sin
 import kotlin.math.sqrt
 
@@ -152,11 +153,11 @@ object CoverField {
             val core = floatArrayOf(h[0] + rnd.r(-0.1f, 0.1f), h[1] + rnd.r(-0.1f, 0.1f))
             blobs += blob(masses[i], Tier.MIDDLE, core, s, dark, rnd)
         }
-        // In front: one or two pools of light in the cover's brightest colorful tones, on the
-        // picture's side of the screen (around and behind it, never under the text).
+        // In front: one or two pools of light in the cover's brightest colorful tones, around and
+        // behind the picture, high on the left (never under the text beside it or below it).
         val bright = sources.sortedByDescending { it.score * (0.5f + it.lab.l) }.take(if (sources.size >= 3) 2 else 1)
         for ((k, src) in bright.withIndex()) {
-            val near = floatArrayOf(if (k == 0) rnd.r(0.04f, 0.2f) else rnd.r(0.2f, 0.34f), if (k == 0) rnd.r(0.08f, 0.35f) else rnd.r(0.65f, 0.92f))
+            val near = floatArrayOf(if (k == 0) rnd.r(0.04f, 0.2f) else rnd.r(0.2f, 0.34f), if (k == 0) rnd.r(0.06f, 0.3f) else rnd.r(0.3f, 0.55f))
             blobs += blob(src, Tier.NEAR, near, s, dark, rnd)
         }
         val field = FieldScene(base, linear(dominant.lab), blobs, null, dark)
@@ -405,22 +406,17 @@ object CoverField {
 
     /**
      * Where text stands (dp: left, top, right, bottom). The text block from the status line to
-     * "Up next", the column's width (in Cover Flow from the farthest left it can stand); in the
-     * player's grid also the song under the cover, the bar and the buttons across the screen.
+     * "Up next", the column's width, and also the song under the cover, the bar and the buttons
+     * across the screen.
      */
     private fun textAreas(layout: StageGrid): List<FloatArray> {
         val column = floatArrayOf(textLeft(layout) - 16f, layout.statusTop - 20f, layout.columnLeft + layout.columnWidth + 8f, layout.footerBottom + 13f)
-        if (!layout.player) return listOf(column)
         val across = floatArrayOf(layout.barLeft - 16f, layout.captionTop - 20f, layout.barLeft + layout.barWidth + 8f, layout.buttonsBottom + 8f)
         return listOf(column, across)
     }
 
-    /**
-     * The farthest left the text column's edge can stand (dp): in Cover Flow it moves left when
-     * cards are missing ([FlowGeometry.balance]), and the shade under it reaches every place.
-     */
-    private fun textLeft(layout: StageGrid): Float =
-        layout.columnLeft + if (layout.flow) FlowGeometry(layout).leftmostColumn else 0f
+    /** Where the text column's left edge stands (dp). */
+    private fun textLeft(layout: StageGrid): Float = layout.columnLeft
 
     /** How soft the text shade's edge is (σ, dp). */
     private const val TEXT_SCRIM_SIGMA = 40f
@@ -439,7 +435,7 @@ object CoverField {
         // Where the text stands, without the margins the shade fades out over.
         val areas = buildList {
             add(floatArrayOf(textLeft(layout), layout.statusTop, layout.columnLeft + layout.columnWidth, layout.footerBottom))
-            if (layout.player) add(floatArrayOf(layout.barLeft, layout.captionTop, layout.barLeft + layout.barWidth, layout.buttonsBottom))
+            add(floatArrayOf(layout.barLeft, layout.captionTop, layout.barLeft + layout.barWidth, layout.buttonsBottom))
         }
         val places = FloatArray(field.blobs.size * FieldModel.STRIDE)
         var t = 0.0
@@ -450,9 +446,12 @@ object CoverField {
                 val u1 = a[2] / screen.widthDp
                 val v0 = a[1] / screen.heightDp
                 val v1 = a[3] / screen.heightDp
-                for (i in 0..GRID_U) for (j in 0..GRID_V) {
-                    val u = u0 + (u1 - u0) * i / GRID_U.toFloat()
-                    val v = v0 + (v1 - v0) * j / GRID_V.toFloat()
+                // As fine everywhere: the row across the screen gets as many points a dp as the column.
+                val nu = max(GRID_U, ((a[2] - a[0]) / CELL_U_DP).roundToInt())
+                val nv = max(GRID_V, ((a[3] - a[1]) / CELL_V_DP).roundToInt())
+                for (i in 0..nu) for (j in 0..nv) {
+                    val u = u0 + (u1 - u0) * i / nu.toFloat()
+                    val v = v0 + (v1 - v0) * j / nv.toFloat()
                     FieldModel.color(field, u, v, places, out)
                     val y = 0.2126f * toLinear(out[0]) + 0.7152f * toLinear(out[1]) + 0.0722f * toLinear(out[2])
                     worst = if (field.dark) max(worst, y) else min(worst, y)
@@ -482,6 +481,10 @@ object CoverField {
     private const val SCRIM_STEP_S = 4.0
     private const val GRID_U = 8
     private const val GRID_V = 12
+
+    /** At least one point of that grid every this many dp across, and down. */
+    private const val CELL_U_DP = 40f
+    private const val CELL_V_DP = 24f
     private const val TARGET = 4.8f
 
     /** sRGB (0..1) to linear via a table: the screen has only 256 levels, and the sampling reads many thousands. */

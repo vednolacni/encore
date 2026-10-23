@@ -91,7 +91,7 @@ class CenteringTest {
         val art = ink.box(0, 0, 960, 1080)
         // The progress bar's track is quiet: found with a lower threshold.
         val right = ink.box(960, 0, 1920, 1080, threshold = 24)
-        assertWithMessage("above and below the artwork").that(abs(art.top - (1079 - art.bottom))).isAtMost(1)
+        assertWithMessage("above the artwork").that(abs(art.top - io.github.hazymorning.klangbild.render.StageGrid.EDGE * 2f)).isAtMost(1f)
         assertWithMessage("left of the artwork, right of the column").that(abs(art.left - (1919 - right.right))).isAtMost(2)
     }
 
@@ -100,66 +100,19 @@ class CenteringTest {
         // The line sung now is set in the title's ink, the others in the quiet one: only it is this bright.
         val words = Fixtures.lyrics("[00:05.00]Die Stadt schläft unter Glas\n[00:09.00]Neonlicht über der A40\n[00:14.00]und ich fahre ohne Ziel")
         val track = Fixtures.track(SyntheticCover.NIGHT_DRIVE)
-        // Cover Flow with its whole strip, so that its column stands where the grid has it.
-        val strip = Fixtures.flowScenes(listOf(SyntheticCover.MOSS, SyntheticCover.MIST, SyntheticCover.NIGHT_DRIVE, SyntheticCover.SALT_WATER, SyntheticCover.CONFETTI).map(Fixtures::track))
-        for (t in listOf(Fixtures.texts, TestTexts.english())) for (flow in listOf(false, true)) {
-            val scene = if (flow) strip[2] else Fixtures.scene(track)
+        for (t in listOf(Fixtures.texts, TestTexts.english())) {
+            val scene = Fixtures.scene(track)
             val model = Fixtures.lyricsModel(track, words, position = { 10_000L }, scene = scene, t = t)
-            val ink = render {
-                Fixtures.Still(t) {
-                    if (flow) io.github.hazymorning.klangbild.ui.flow.FlowStage(model, Fixtures.restingCards(strip, 2)) else Stage(model)
-                }
-            }
+            val ink = render { Fixtures.Still(t) { Stage(model) } }
             val layout = scene.layout
             val left = (layout.columnLeft * 2).toInt() - 4
             val sung = ink.lines(left, 1920, threshold = LIT).single()
-            val case = "${if (flow) "Cover Flow" else "single cover"} in ${t.locale}"
-            // Its cap height and its baseline are as far from the artwork's middle (540) on either side.
+            val case = "in ${t.locale}"
+            // Its cap height and its baseline are as far from the artwork's middle on either side.
             val cap = 30f * io.github.hazymorning.klangbild.ui.theme.Fonts.CAP_HEIGHT * 2f
-            assertWithMessage("$case: the sung line's baseline").that(abs(sung.baseline - (540f + cap / 2f))).isAtMost(1.5f)
+            assertWithMessage("$case: the sung line's baseline").that(abs(sung.baseline - (layout.textCenter * 2f + cap / 2f))).isAtMost(1.5f)
             // It starts on the column's left edge (pulled left by large type's extra side bearing, a pixel or two).
             assertWithMessage("$case: the sung line's left edge").that(abs(sung.left - layout.columnLeft * 2f)).isAtMost(4f)
-        }
-    }
-
-    @Test
-    fun theQueuesQuietLinesLeadWhatFollowsAtOneDistanceAndTheListKeepsToTheColumn() {
-        // A title that takes the list's largest size on one line, and a first row whose small
-        // cover is light at its top, so that its ink starts where the row's cap height stands.
-        val playing = Fixtures.track(SyntheticCover.NIGHT_DRIVE)
-        val first = Fixtures.track(SyntheticCover.BAUHAUS)
-        val coming = listOf(first) + Fixtures.tracks.filter { it != playing && it != first && it.durationMs != null }
-        for (t in listOf(Fixtures.texts, TestTexts.english())) {
-            val model = Fixtures.queueModel(playing, Fixtures.queueList(coming), t = t)
-            val ink = render { Fixtures.Still(t) { Stage(model) } }
-            val layout = model.scene.layout
-            val left = (layout.columnLeft * 2).toInt() - 4
-            val lines = ink.lines(left, 1920)
-            // The status line, the title, artist and album, the bar, its times, "Up next", the rows.
-            val bar = lines.indexOfFirst { it.inkBottom - it.inkTop < 12 }
-            val (status, title, meta) = lines
-            val times = lines[bar + 1]
-            val heading = lines[bar + 2]
-            val row = lines[bar + 3]
-            val case = "in ${t.locale}"
-            // The status line leads the song as "Up next" leads the rows: baseline to cap height.
-            val titleCap = title.baseline - 34f * Fonts.CAP_HEIGHT * 2f
-            assertWithMessage("$case: status line to title against \"Up next\" to the first row")
-                .that(abs((titleCap - status.baseline) - (row.inkTop - heading.baseline))).isAtMost(2f)
-            assertWithMessage("$case: the status line's cap height on the grid").that(abs(status.inkTop - layout.statusTop * 2f)).isAtMost(2f)
-            // The song and the list stand further apart than anything within the song: the bar
-            // (its fill, then its times) belongs to the song.
-            assertWithMessage("$case: the room before the list against the room above the bar")
-                .that(heading.top - times.baseline).isGreaterThan(lines[bar].inkTop - meta.baseline + 8)
-            // Nothing of the list reaches past the column's foot, or beyond its right edge.
-            val foot = (layout.footerBottom * 2).toInt()
-            assertWithMessage("$case: below the column's foot").that(ink.box(left, foot + 1, 1920, 1080, threshold = 24).right).isEqualTo(-1)
-            val right = ((layout.columnLeft + layout.columnWidth) * 2).toInt()
-            assertWithMessage("$case: right of the column").that(ink.box(right + 2, 0, 1920, 1080, threshold = 24).right).isEqualTo(-1)
-            // Every line starts on the column's left edge (the title a pixel or two further left).
-            for (line in listOf(status, title, heading, row)) {
-                assertWithMessage("$case: a line's left edge at ${line.top}").that(abs(line.left - layout.columnLeft * 2f)).isAtMost(4f)
-            }
         }
     }
 

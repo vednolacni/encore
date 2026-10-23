@@ -243,7 +243,7 @@ class SetupServer(
         }.getOrNull()
 
         /**
-         * Asks Home Assistant at [url] for its media players, lights, weather entities, what a
+         * Asks Home Assistant at [url] for its media players, lights, what a
          * button can work and every entity for the values and conditions (REST `/api/states`),
          * and for the fields its scripts declare (`/api/services`, as far as it answers), with
          * [credentials]. Every failure becomes one calm sentence for the setup page.
@@ -303,11 +303,6 @@ class SetupServer(
                 val id = o.id()?.takeIf { it.startsWith("light.") } ?: return@mapNotNull null
                 LightOption(id, o.name() ?: id, stateWord(o.state(), t))
             }.sortedBy { it.name.lowercase() }
-            // Weather entities: their clouds set the landscape's sky.
-            val weather = states.mapNotNull { o ->
-                val id = o.id()?.takeIf { it.startsWith("weather.") } ?: return@mapNotNull null
-                WeatherOption(id, o.name() ?: id, weatherWord(o.state(), t))
-            }.sortedBy { it.name.lowercase() }
             // What the quick settings' own buttons can work, by kind (scripts first), then by name;
             // a script with the fields it declares.
             val actions = states.mapNotNull { o ->
@@ -319,7 +314,7 @@ class SetupServer(
                 val id = o.id() ?: return@mapNotNull null
                 entityOption(id, o.name() ?: id, o.state(), o.attrs())
             }.sortedBy { it.name.lowercase() }
-            return DiscoverResult.Ok(speakers, lights, weather, actions, entities)
+            return DiscoverResult.Ok(speakers, lights, actions, entities)
         }
 
         /**
@@ -415,22 +410,6 @@ class SetupServer(
                 example = (f["example"] as? JsonPrimitive)?.content,
                 domains = (domains(config) + filters.flatMap(::domains)).distinct(),
             )
-        }
-
-        /** A weather condition (https://developers.home-assistant.io/docs/core/entity/weather) in words. */
-        private fun weatherWord(state: String, t: Texts) = when (state) {
-            "sunny" -> t[R.string.weather_sunny]
-            "clear-night" -> t[R.string.weather_clear_night]
-            "partlycloudy" -> t[R.string.weather_partlycloudy]
-            "cloudy" -> t[R.string.weather_cloudy]
-            "fog" -> t[R.string.weather_fog]
-            "rainy", "pouring" -> t[R.string.weather_rain]
-            "snowy", "snowy-rainy" -> t[R.string.weather_snow]
-            "hail" -> t[R.string.weather_hail]
-            "lightning", "lightning-rainy" -> t[R.string.weather_thunderstorm]
-            "windy", "windy-variant" -> t[R.string.weather_windy]
-            "exceptional" -> t[R.string.weather_exceptional]
-            else -> stateWord(state, t)
         }
 
         private fun stateWord(state: String, t: Texts) = when (state) {

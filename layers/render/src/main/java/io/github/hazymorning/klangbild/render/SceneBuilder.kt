@@ -28,7 +28,7 @@ class ArtworkScene(
     val coverGenerated: Boolean,
     /**
      * The wall around the print, scaled to the whole screen. In the dark it is the print's light
-     * on black ([WallGlow]; in Cover Flow the pool of light above the cards, [FlowLight]); in the
+     * on black ([WallGlow]); in the
      * light it is plain paper. There is no shadow, no frame and no line around the print.
      */
     val wall: Bitmap,
@@ -38,8 +38,6 @@ class ArtworkScene(
     val thumb: IntArray,
     /** How much of the cover's color the light wall takes (the light level setting). */
     val wallTint: Float = 1f,
-    /** The print as a card of the cover flow, with its mirror image; null beside a single cover. */
-    val card: FlowCard? = null,
     /**
      * The cover's colors as a field ([CoverField]). With [coverField] it is the wall behind
      * the picture; the lights always take their colors from it.
@@ -61,6 +59,7 @@ object SceneBuilder {
 
     /**
      * @param source decoded cover or null (radio, missing art) → generated Chladni figure.
+     * @param layout the grid it hangs in: the stage's, or the setup page's.
      */
     fun build(
         key: String,
@@ -69,11 +68,9 @@ object SceneBuilder {
         screen: ScreenSpec,
         appearance: Appearance = Appearance.DARK,
         wallTint: Float = 1f,
-        flow: Boolean = false,
         coverField: Boolean = false,
-        player: Boolean = false,
+        layout: StageGrid = StageGrid(screen),
     ): ArtworkScene {
-        val layout = StageGrid(screen, flow, player)
         val slotPx = (layout.art * screen.density).roundToInt()
         val slotRect = layout.artRect
         val coverPixels: IntArray
@@ -102,32 +99,12 @@ object SceneBuilder {
         return assemble(key, layout, cover, shape, source == null, analysis, thumb, appearance, wallTint, coverField)
     }
 
-    /**
-     * A row's small cover in the queue's list: [cover] cut square and made [side] px wide with
-     * Lanczos, as the stage's cover is; without one, the generated figure for [seed].
-     */
-    fun rowCover(cover: Bitmap?, seed: String, side: Int): Bitmap {
-        val pixels = if (cover == null) {
-            ChladniArt.render(ChladniArt.specFor(seed), side, seed = stableHash(seed))
-        } else {
-            val s = min(cover.width, cover.height)
-            val square = IntArray(s * s)
-            cover.getPixels(square, 0, s, (cover.width - s) / 2, (cover.height - s) / 2, s, s)
-            ImageOps.resize(square, s, s, side, side)
-        }
-        return Bitmap.createBitmap(pixels, side, side, Bitmap.Config.ARGB_8888)
-    }
-
     /** Re-light an existing scene (appearance, wall tint or background changed) without the source image. */
-    fun relight(scene: ArtworkScene, appearance: Appearance, wallTint: Float, coverField: Boolean = scene.coverField): ArtworkScene {
-        val sameWall = scene.appearance == appearance
-        return assemble(
+    fun relight(scene: ArtworkScene, appearance: Appearance, wallTint: Float, coverField: Boolean = scene.coverField): ArtworkScene =
+        assemble(
             scene.key, scene.layout, scene.cover, scene.shape, scene.coverGenerated,
             scene.analysis, scene.thumb, appearance, wallTint, coverField,
-            // The card only changes with the wall (its mirror image).
-            card = scene.card.takeIf { sameWall },
         )
-    }
 
     private fun assemble(
         key: String,
@@ -140,10 +117,8 @@ object SceneBuilder {
         appearance: Appearance,
         wallTint: Float,
         coverField: Boolean,
-        card: FlowCard? = null,
     ): ArtworkScene {
         val palette = CoverPalette.derive(analysis, appearance, wallTint, cover = coverField)
-        val flow = layout.flow
         // The cover's colors: the wall itself with "cover colors", otherwise only for the lights.
         val field = CoverField.build(
             thumb, THUMB, analysis, appearance, strength = wallTint,
@@ -152,26 +127,13 @@ object SceneBuilder {
         val wall = when {
             // The field is the wall; the plain one is only its color underneath.
             coverField -> Bitmap.createBitmap(IntArray(16) { palette.wall }, 4, 4, Bitmap.Config.ARGB_8888)
-            flow && appearance == Appearance.DARK -> {
-                // The light above the cards takes the print's top edge.
-                Bitmap.createBitmap(FlowLight.field(FlowLight.topEdge(thumb, THUMB), layout), FlowLight.MAP_W, FlowLight.MAP_H, Bitmap.Config.ARGB_8888)
-            }
             appearance == Appearance.DARK -> {
                 // The wall sees the outside of the picture: its edges.
                 Bitmap.createBitmap(WallGlow.field(thumb, THUMB, shape, layout.screen), WallGlow.MAP_W, WallGlow.MAP_H, Bitmap.Config.ARGB_8888)
             }
-            // Paper, in Cover Flow as around the single print.
+            // Paper around the print.
             else -> Bitmap.createBitmap(IntArray(16) { palette.wall }, 4, 4, Bitmap.Config.ARGB_8888)
         }
-        val flowCard = if (!flow) null else card ?: FlowCards.build(
-            cover = cover,
-            round = shape.round,
-            cornerPx = layout.radius * layout.screen.density,
-            geometry = FlowGeometry(layout),
-            density = layout.screen.density,
-            appearance = appearance,
-            lightness = analysis.meanL,
-        )
         return ArtworkScene(
             key = key,
             layout = layout,
@@ -183,7 +145,6 @@ object SceneBuilder {
             analysis = analysis,
             thumb = thumb,
             wallTint = wallTint,
-            card = flowCard,
             field = field,
             coverField = coverField,
         )

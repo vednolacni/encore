@@ -14,7 +14,7 @@ import io.github.hazymorning.klangbild.ui.LocalStill
 import io.github.hazymorning.klangbild.ui.Motion
 
 /**
- * How a pause, or a lost link, dims the stage (a single cover or Cover Flow): the wall's
+ * How a pause, or a lost link, dims the stage: the wall's
  * [light], the [picture] (on paper a little less) and the [text], all gliding in
  * [Motion.PAUSE_MS]. While the speaker buffers, the light breathes, and when it plays again the
  * light glides back from where the breath was. Read the values in draw lambdas.

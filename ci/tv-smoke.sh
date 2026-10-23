@@ -2,7 +2,7 @@
 # Starts a stand-in Home Assistant on the host (ci/fake_ha.py), installs the release APK on
 # the running Android TV emulator, points it at that server with launch extras and walks
 # through the main states: playing, a key press that shows hidden parts, the settings menu,
-# a track change, new extras while running, the quick settings and the landscape. With
+# a track change, new extras while running, the player's buttons and the quick settings. With
 # SENDSPIN_PYTHON set (a Python with aiosendspin), the TV then plays as a speaker from a
 # Sendspin server on the host. Checks that the app is still alive and never crashed. Leaves
 # screenshots, logcat and gfxinfo in smoke/.
@@ -54,20 +54,16 @@ adb shell am start -n "$PKG/.MainActivity" --es light subtle
 sleep 4
 adb exec-out screencap -p > smoke/5-light-subtle.png
 
-# The quick settings rise from the bottom edge on down; up closes them.
+# Down chooses among the player's buttons, down again opens the quick settings along the
+# bottom edge; up closes them.
 adb shell input keyevent KEYCODE_DPAD_DOWN
 sleep 2
-adb exec-out screencap -p > smoke/6-quick-settings.png
+adb exec-out screencap -p > smoke/6-buttons.png
+adb shell input keyevent KEYCODE_DPAD_DOWN
+sleep 2
+adb exec-out screencap -p > smoke/7-quick-settings.png
 adb shell input keyevent KEYCODE_DPAD_UP
-sleep 1
-
-# The landscape on request (its picture is baked first). Asked for, it stays until it is
-# left: Back brings the stage back.
-adb shell am start -n "$PKG/.MainActivity" --es landscape on
-sleep 20
-adb exec-out screencap -p > smoke/7-landscape.png
-adb shell input keyevent KEYCODE_BACK
-sleep 5
+sleep 2
 adb exec-out screencap -p > smoke/8-back-to-stage.png
 
 # This TV as a speaker: the server Music Assistant 2.10.7 runs (aiosendspin, ci/sendspin_server.py)

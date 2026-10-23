@@ -80,40 +80,6 @@ enum class RoomLightBrightness(val brightness: Float) {
     }
 }
 
-/**
- * How the stage shows the queue: not at all (one large cover, the last line naming what comes
- * next), as a list beside that same cover, or as Cover Flow.
- */
-enum class QueueDisplay {
-    OFF,
-
-    /** What comes next as a list in the text column, beside the cover. */
-    LIST,
-
-    /** Cover Flow: the cover in the middle, those before it to the left, those to come to the right. */
-    FLOW,
-}
-
-/** Where the music's label sits in the landscape. */
-enum class MiniPlayer { LEFT, RIGHT, OFF }
-
-/**
- * How the stage is laid out around the single cover: the song beside it, or as a music player
- * lays it out, with the progress bar across the screen and buttons under it.
- */
-enum class StageLayout {
-    /** The song beside the cover, the progress bar under the song. */
-    CLASSIC,
-
-    /**
-     * A smaller cover high on the left, the progress bar across the screen and buttons for the
-     * lyrics and the settings under it. While the song's words take the column, its title and
-     * artist stand under the cover. Only while the queue is off: Cover Flow and the list keep
-     * their own grids.
-     */
-    PLAYER,
-}
-
 /** The color lights behind the TV (Home Assistant light entities), from the left; any may be missing. */
 data class RoomLights(val left: String? = null, val center: String? = null, val right: String? = null) {
     /** Each light once, from the left. */
@@ -165,16 +131,12 @@ data class Settings(
     /** The values of one's own show in the status line. */
     val showValues: Boolean = true,
     val intensity: Intensity = Intensity.NORMAL,
-    /** Up and down on the remote change the speaker's volume (instead of the landscape and the quick settings). */
+    /** Up and down on the remote change the speaker's volume (instead of opening the buttons and the quick settings). */
     val volumeKeys: Boolean = false,
     val appearance: AppearanceMode = AppearanceMode.AUTO,
-    /** How the queue shows: not at all, as a list, or as Cover Flow. */
-    val queue: QueueDisplay = QueueDisplay.OFF,
-    /** How the stage is laid out around the single cover. */
-    val layout: StageLayout = StageLayout.CLASSIC,
     /** A song's words take the text column where Music Assistant has them synced (the quick settings' Lyrics). */
     val lyrics: Boolean = false,
-    /** Music Assistant itself (optional): for the whole queue in Cover Flow. */
+    /** Music Assistant itself (optional): for the song's words, what comes next and the speaker on this TV. */
     val maUrl: String? = null,
     val maToken: String? = null,
     /** This TV plays music from Music Assistant, as one of its speakers (needs Music Assistant). */
@@ -188,38 +150,14 @@ data class Settings(
     val lightsOnlyOn: Boolean = false,
     /** With an audiobook or a podcast, left and right jump back 15 and ahead 30 seconds. */
     val spokenSkip: Boolean = true,
-    /** The landscape takes the screen after the music has been paused this long (s); 0 never. */
-    val landscapePauseSeconds: Int = 180,
-    /** The landscape also comes while music plays, after this long without a key pressed (s); 0 never. */
-    val landscapePlayingSeconds: Int = 0,
-    /** Where the music's label sits in the landscape. */
-    val miniPlayer: MiniPlayer = MiniPlayer.LEFT,
-    /** The weather entity whose clouds set the landscape's sky; null finds Home Assistant's own, [NO_WEATHER] none. */
-    val weatherEntity: String? = null,
     /** Buttons of one's own in the quick settings, set up on the phone. */
     val quickActions: List<QuickAction> = emptyList(),
     /** Values of one's own from Home Assistant in the status line, set up on the phone. */
     val ownValues: List<OwnValue> = emptyList(),
-    /** The quick settings have been opened once: the stage no longer tells how to open them. */
-    val quickSeen: Boolean = false,
 ) {
-    /** The weather entities to follow: the one chosen, else Home Assistant's usual forecast entities. */
-    val weatherEntities: List<String>
-        get() = when (weatherEntity) {
-            null -> DEFAULT_WEATHER
-            NO_WEATHER -> emptyList()
-            else -> listOf(weatherEntity)
-        }
-
     companion object {
-        /** No weather entity: the landscape's sky stays fair. */
-        const val NO_WEATHER = "none"
-
         /** "Turn off after" goes up to this many minutes (twelve hours). */
         const val MAX_SLEEP_MINUTES = 720
-
-        /** The entities Home Assistant's own weather integration (Met.no) creates. */
-        val DEFAULT_WEATHER = listOf("weather.forecast_home", "weather.home")
     }
 
     /** How Klangbild signs in to Home Assistant: a sign-in wins over a long-lived token. */
@@ -236,9 +174,6 @@ data class Settings(
 
     /** This TV plays as a speaker: switched on, and Music Assistant set up. */
     val speakerOn: Boolean get() = tvSpeaker && hasMusicAssistant
-
-    /** The stage is laid out as a player: chosen, and the queue off (Cover Flow and the list have grids of their own). */
-    val player: Boolean get() = layout == StageLayout.PLAYER && queue == QueueDisplay.OFF
 
     /**
      * [haUrl] set to [url] with [credentials]. Credentials only ever go to the address they were
@@ -277,9 +212,4 @@ data class Settings(
 data class SessionOptions(
     val showSetup: Boolean = false,
     val debugOverlay: Boolean = false,
-    /** The landscape shown at once (`landscape=on`), or with the day passing in two minutes (`timelapse`). */
-    val landscape: LandscapeRequest? = null,
 )
-
-/** A landscape asked for from outside (a link, `am start`, Home Assistant). */
-enum class LandscapeRequest { SHOW, TIMELAPSE, HIDE }

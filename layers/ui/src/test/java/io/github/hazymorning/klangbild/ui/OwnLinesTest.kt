@@ -9,11 +9,8 @@ import androidx.compose.ui.test.captureToImage
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
-import io.github.hazymorning.klangbild.app.FlowData
-import io.github.hazymorning.klangbild.app.FlowEntry
 import io.github.hazymorning.klangbild.app.UiState
 import io.github.hazymorning.klangbild.art.SyntheticCover
-import io.github.hazymorning.klangbild.config.QueueDisplay
 import io.github.hazymorning.klangbild.domain.PlayerStatus
 import io.github.hazymorning.klangbild.domain.Screen
 import io.github.hazymorning.klangbild.render.ScreenSpec
@@ -48,13 +45,6 @@ class OwnLinesTest {
         keepsItsLines(UiState(screen = Screen.Stage(a, PlayerStatus.PLAYING, b), stage = stage))
     }
 
-    @Test
-    fun coverFlowKeepsItsTimeAndNext() {
-        val scene = Fixtures.scene(a, mdpi, flow = true)
-        val flow = FlowData(listOf(FlowEntry(0L, a, scene)), 0)
-        keepsItsLines(UiState(screen = Screen.Stage(a, PlayerStatus.PLAYING, b), queue = QueueDisplay.FLOW, flow = flow))
-    }
-
     /**
      * A plays at 1:05 with B up next; then the player reports B from its start, and a few ticks
      * later the screen shows B with C up next, its scene not made yet.
@@ -80,7 +70,7 @@ class OwnLinesTest {
 
     private fun capture(): Bitmap = compose.onRoot().captureToImage().asAndroidBitmap()
 
-    /** How many pixels two frames show visibly apart (the column stands elsewhere with one card). */
+    /** How many pixels two frames show visibly apart. */
     private fun changed(p: Bitmap, q: Bitmap): Int {
         var n = 0
         for (y in 0 until p.height) for (x in 0 until p.width) {

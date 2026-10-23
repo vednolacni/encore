@@ -29,8 +29,7 @@ import kotlin.math.abs
 
 /**
  * A party's code where the cover stands, for the guests to scan from the couch. Read from
- * rendered pixels, it gives the party's link back beside a single cover and in Cover Flow, on
- * both walls, on the cover's colors and in a pause, and nothing of the cover shows through it.
+ * rendered pixels, it gives the party's link back where the cover stands, on both walls, on the cover's colors and in a pause, and nothing of the cover shows through it.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -73,11 +72,8 @@ class PartyCodeTest {
 
     private val song = Fixtures.track(SyntheticCover.BAUHAUS)
 
-    /** The single cover's artwork at 2 px a dp (368 dp at 88 dp from the left, centered), inside its corners. */
-    private val single = intArrayOf(176 + 16, 172 + 16, 912 - 16, 908 - 16)
-
-    /** Cover Flow's middle card (300 dp, its middle 303 dp from the left and in the middle of the height), inside its corners. */
-    private val middle = intArrayOf(306 + 14, 240 + 14, 906 - 14, 840 - 14)
+    /** The artwork at 2 px a dp (290 dp at 88 dp from the left and 44 dp from the top), inside its corners. */
+    private val single = intArrayOf(176 + 16, 88 + 16, 756 - 16, 668 - 16)
 
     @Test
     fun `where the cover stands, the code gives the party's link`() {
@@ -104,18 +100,6 @@ class PartyCodeTest {
             Fixtures.Theater(Fixtures.stage(song), PlayerStatus.PAUSED, next = Fixtures.spiegel, group = "Wohnzimmer", partyCode = LINK)
         }
         assertThat(scan(bmp, single)).isEqualTo(LINK)
-    }
-
-    @Test
-    fun `in Cover Flow the code stands in the middle card's place`() {
-        val strip = listOf(SyntheticCover.TERRACOTTA, SyntheticCover.MOSS, SyntheticCover.BAUHAUS, SyntheticCover.WHITE_SPACE, SyntheticCover.NIGHT_DRIVE)
-        for (wall in Appearance.entries) {
-            val scenes = strip.mapIndexed { i, c -> i.toLong() to Fixtures.scene(Fixtures.track(c), appearance = wall, flow = true) }.toMap()
-            val name = "flow_${wall.name.lowercase()}"
-            val bmp = render(name) { Fixtures.FlowTheaterOf(Fixtures.flow(scenes, listOf(0, 1, 2, 3, 4), 2), partyCode = LINK) }
-            assertWithMessage(name).that(scan(bmp, middle)).isEqualTo(LINK)
-            assertWithMessage("$name: above the code").that(spread(bmp, intArrayOf(middle[0], middle[1], middle[2], middle[1] + 30))).isAtMost(2)
-        }
     }
 
     private companion object {

@@ -36,7 +36,7 @@ class ArtworkLoader(
         override fun removeEldestEntry(eldest: MutableMap.MutableEntry<String, Long>?) = size > MAX_FAILED
     }
 
-    /** A few downloads and decodes at a time: a whole cover flow at once would hold every source in memory. */
+    /** A few downloads and decodes at a time: many at once would hold every source in memory. */
     private val slots = Semaphore(MAX_LOADS)
 
     /**

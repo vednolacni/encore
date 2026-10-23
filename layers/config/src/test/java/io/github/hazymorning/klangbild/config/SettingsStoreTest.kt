@@ -1,9 +1,7 @@
 package io.github.hazymorning.klangbild.config
 
 import android.content.Context
-import androidx.datastore.preferences.core.Preferences
 import androidx.datastore.preferences.core.mutablePreferencesOf
-import androidx.datastore.preferences.core.preferencesOf
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -81,8 +79,6 @@ class SettingsStoreTest {
             intensity = Intensity.STRONG,
             volumeKeys = true,
             appearance = AppearanceMode.DARK,
-            queue = QueueDisplay.LIST,
-            layout = StageLayout.PLAYER,
             lyrics = true,
             maUrl = "http://192.168.1.5:8095",
             maToken = "ma-token",
@@ -93,13 +89,8 @@ class SettingsStoreTest {
             roomLightBrightness = RoomLightBrightness.P90,
             lightsOnlyOn = true,
             spokenSkip = false,
-            landscapePauseSeconds = 600,
-            landscapePlayingSeconds = 1_800,
-            miniPlayer = MiniPlayer.RIGHT,
-            weatherEntity = "weather.home",
             quickActions = listOf(QuickAction("Ungroup", "script.ungroup", condition = Condition("media_player.kitchen", "group_members", Condition.Test.ABOVE, "1"))),
             ownValues = listOf(OwnValue("Outside", "sensor.outside_temperature")),
-            quickSeen = true,
         )
         // A setting the store forgets would come back as its default, so every one differs from it here.
         val defaults = Settings()
@@ -113,34 +104,14 @@ class SettingsStoreTest {
     }
 
     @Test
-    fun `the view an earlier version stored becomes how the queue shows, and its key goes`() {
-        val store = SettingsStore(context, FakeBox())
-        val view = stringPreferencesKey("view")
-        val queue = stringPreferencesKey("queue")
-        // Cover Flow stays Cover Flow, and the single cover, which had no list, is the queue off.
-        fun after(stored: String): Preferences = mutablePreferencesOf(view to stored).also { store.migrate(it) }
-        assertThat(after("FLOW")[queue]).isEqualTo("FLOW")
-        assertThat(after("SINGLE")[queue]).isEqualTo("OFF")
-        assertThat(after("SINGLE").contains(view)).isFalse()
-        assertThat(store.read(after("FLOW")).queue).isEqualTo(QueueDisplay.FLOW)
-        // Read before the step has run, it means the same.
-        assertThat(store.read(preferencesOf(view to "FLOW")).queue).isEqualTo(QueueDisplay.FLOW)
-        assertThat(store.read(preferencesOf(view to "SINGLE")).queue).isEqualTo(QueueDisplay.OFF)
-        // A value it does not know reads as the default, and the queue's own key wins.
-        assertThat(store.read(preferencesOf(view to "ELSEWHERE")).queue).isEqualTo(Settings().queue)
-        assertThat(store.read(preferencesOf(view to "FLOW", queue to "LIST")).queue).isEqualTo(QueueDisplay.LIST)
-    }
-
-    @Test
-    fun `moving the view touches nothing else, not even a token that cannot be opened now`() {
+    fun `bringing a store up to date touches nothing without a plain token, not even one that cannot be opened now`() {
         // The keystore cannot open the sealed token at this moment: it must stay as it is.
         val store = SettingsStore(context, FakeBox(opening = false))
         val token = stringPreferencesKey("ha_token")
         val url = stringPreferencesKey("ha_url")
-        val p = mutablePreferencesOf(stringPreferencesKey("view") to "FLOW", token to "sealed:terces", url to "http://192.168.1.5:8123")
+        val p = mutablePreferencesOf(token to "sealed:terces", url to "http://192.168.1.5:8123")
         store.migrate(p)
         assertThat(p.asMap().mapKeys { it.key.name }).containsExactly(
-            "queue", "FLOW",
             "ha_token", "sealed:terces",
             "ha_url", "http://192.168.1.5:8123",
         )

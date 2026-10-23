@@ -44,17 +44,6 @@ class SongChangeBlinkTest {
         changes { k -> stage = stages[k % stages.size] }
     }
 
-    @Test
-    fun coverFlowNeverBlinks() {
-        val scenes = covers.mapIndexed { i, c -> i.toLong() to Fixtures.scene(Fixtures.track(c), mdpi, flow = true) }.toMap()
-        val ids = scenes.keys.toList()
-        var strip by mutableStateOf(Fixtures.flow(scenes, ids, ids[1]))
-        compose.mainClock.autoAdvance = false
-        compose.setContent { Fixtures.FlowTheaterOf(strip) }
-        changes { k -> strip = Fixtures.flow(scenes, ids, ids[1 + k % 2]) }
-    }
-
-    /** Song changes arriving at every point of a frame: the column never loses its lines at once. */
     private fun changes(change: (Int) -> Unit) {
         compose.mainClock.advanceTimeBy(3_000)
         var k = 1
@@ -76,10 +65,10 @@ class SongChangeBlinkTest {
 
     /** How much ink the text column holds: its pixels brighter than the dark wall's text shade. */
     private fun inked(b: Bitmap): Float {
-        val x0 = 520
-        val y0 = 80
-        val w = 940 - x0
-        val h = 470 - y0
+        val x0 = 450
+        val y0 = 60
+        val w = 870 - x0
+        val h = 330 - y0
         val px = IntArray(w * h).also { b.getPixels(it, 0, w, x0, y0, w, h) }
         return px.count { (it shr 8 and 0xFF) > 110 }.toFloat()
     }

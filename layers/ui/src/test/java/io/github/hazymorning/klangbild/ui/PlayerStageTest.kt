@@ -65,11 +65,9 @@ class PlayerStageTest {
             if (english) nightLyrics else neonLyrics,
             position = if (english) ({ 81_000L }) else ({ 84_000L }),
             appearance = appearance,
-            scene = Fixtures.scene(track, appearance = appearance, coverField = coverField, player = true),
+            scene = Fixtures.scene(track, appearance = appearance, coverField = coverField),
             t = t,
             group = if (english) "Living room" else "Wohnzimmer",
-            // A player's bar shows as set, beside the words too.
-            peek = true,
             linkDown = linkDown,
         )
     }
@@ -91,19 +89,19 @@ class PlayerStageTest {
 
     @Test fun settingsChosen() = shot("chosen_settings", words(Appearance.LIGHT, t = en), buttons(en, QuickItem.SETTINGS), en)
 
-    /** The words off: the song beside the cover as in the classic layout, the bar across the screen. */
+    /** The words off: the song beside the cover, the bar across the screen. */
     @Test
     fun withoutWords() {
-        val scene = Fixtures.scene(Fixtures.night, player = true)
+        val scene = Fixtures.scene(Fixtures.night)
         shot("song_dark_en", Fixtures.model(Fixtures.night, next = Fixtures.spiegel, t = en, group = "Living room", scene = scene), buttons(en, lyrics = LyricsChoice.OFF), en)
-        val paper = Fixtures.scene(neon, appearance = Appearance.LIGHT, player = true)
+        val paper = Fixtures.scene(neon, appearance = Appearance.LIGHT)
         shot("song_light", Fixtures.model(neon, next = Fixtures.spiegel, appearance = Appearance.LIGHT, scene = paper), buttons(Fixtures.texts, lyrics = LyricsChoice.OFF))
     }
 
     /** Without Music Assistant only the way into the settings stands there. */
     @Test
     fun settingsAlone() {
-        val scene = Fixtures.scene(Fixtures.night, player = true)
+        val scene = Fixtures.scene(Fixtures.night)
         shot("settings_alone_en", Fixtures.model(Fixtures.night, next = Fixtures.spiegel, t = en, scene = scene), buttons(en, lyrics = null), en)
     }
 

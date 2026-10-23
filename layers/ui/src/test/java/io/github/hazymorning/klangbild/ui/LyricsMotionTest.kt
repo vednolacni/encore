@@ -10,12 +10,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.test.onRoot
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.github.takahirom.roborazzi.captureRoboImage
-import io.github.hazymorning.klangbild.app.FlowData
 import io.github.hazymorning.klangbild.app.StageData
 import io.github.hazymorning.klangbild.art.SyntheticCover
 import io.github.hazymorning.klangbild.domain.PlayerStatus
 import io.github.hazymorning.klangbild.render.ScreenSpec
-import io.github.hazymorning.klangbild.ui.flow.FlowTheater
 import io.github.hazymorning.klangbild.ui.stage.StageModel
 import io.github.hazymorning.klangbild.ui.stage.StageTexts
 import io.github.hazymorning.klangbild.ui.stage.StageTheater
@@ -31,7 +29,7 @@ import org.junit.experimental.categories.Category
 /**
  * The song's words in motion, as sequences of stills: the list gliding one line on, a break
  * dimming the line, a jump cross-fading the list, the words coming and going with the stage's
- * text change, a new song's words, and the same in Cover Flow.
+ * text change, and a new song's words.
  */
 @Category(Pictures::class)
 @RunWith(AndroidJUnit4::class)
@@ -73,13 +71,6 @@ class LyricsMotionTest {
         val latest by rememberUpdatedState(stage)
         val models = remember { modelFor { latest } }
         Fixtures.Still { StageTheater(stage = stage, status = status, modelFor = models) }
-    }
-
-    @Composable
-    private fun Flow(flow: FlowData) {
-        val latest by rememberUpdatedState(flow.stage)
-        val models = remember { modelFor { latest } }
-        Fixtures.Still { FlowTheater(flow = flow, status = PlayerStatus.PLAYING, modelFor = models) }
     }
 
     private fun stage(track: io.github.hazymorning.klangbild.domain.TrackInfo, words: io.github.hazymorning.klangbild.domain.Lyrics?) =
@@ -183,37 +174,6 @@ class LyricsMotionTest {
         frames("song", frames = 12, stepMs = 100) {
             position = 3_000L
             s = next
-        }
-    }
-
-    private val flowCovers = listOf(SyntheticCover.TERRACOTTA, SyntheticCover.MOSS, SyntheticCover.NIGHT_DRIVE, SyntheticCover.SALT_WATER, SyntheticCover.BAUHAUS)
-
-    private fun flowScenes() = flowCovers.mapIndexed { i, c ->
-        i.toLong() to Fixtures.scene(Fixtures.track(c), mdpi, flow = true)
-    }.toMap()
-
-    @Test
-    fun coverFlowTheWordsCome() {
-        position = 84_000L
-        val scenes = flowScenes()
-        var f by mutableStateOf(Fixtures.flow(scenes, listOf(0, 1, 2, 3, 4), 2))
-        val on = f.copy(lyrics = neonLyrics)
-        compose.mainClock.autoAdvance = false
-        compose.setContent { Flow(f) }
-        frames("flow_on", frames = 10, stepMs = 100) { f = on }
-    }
-
-    @Test
-    fun coverFlowTurnsToTheNextSongWithItsWords() {
-        position = 84_000L
-        val scenes = flowScenes()
-        var f by mutableStateOf(Fixtures.flow(scenes, listOf(0, 1, 2, 3, 4), 2).copy(lyrics = neonLyrics))
-        val next = Fixtures.flow(scenes, listOf(0, 1, 2, 3, 4), 3).copy(lyrics = saltWords)
-        compose.mainClock.autoAdvance = false
-        compose.setContent { Flow(f) }
-        frames("flow_song", frames = 14, stepMs = 100) {
-            position = 3_000L
-            f = next
         }
     }
 }

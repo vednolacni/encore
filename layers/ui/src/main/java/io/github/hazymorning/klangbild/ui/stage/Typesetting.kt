@@ -152,7 +152,7 @@ class TextPlan(
 fun rememberTextPlan(model: StageModel): TextPlan {
     val measurer = rememberTextMeasurer(cacheSize = 24)
     val localDensity = LocalDensity.current
-    val nextLead = model.nextLead ?: texts()[R.string.stage_next]
+    val nextLead = texts()[R.string.stage_next]
     return remember(
         model.text, model.year, model.next, model.scene.layout, model.scene.palette, model.progress, model.line, model.durationMs == null,
         model.chapter != null, localDensity, nextLead,
@@ -191,10 +191,7 @@ private fun planText(
         if (version != null) rest += Gaps.VERSION * d + cap(normal.version(step.size))
         rest += Gaps.ARTIST * d + cap(normal.artist)
         if (t.album != null || model.year != null || model.chapter != null) rest += Gaps.ALBUM * d + cap(normal.album)
-        // In the player's grid the bar stands across the screen, apart from the block.
-        if (!layout.player && (model.line != null || (model.progress && model.durationMs != null))) {
-            rest += Gaps.BOTTOM * d + (BAR_THICKNESS + BAR_LABEL_GAP) * d + cap(normal.label)
-        }
+        // The bar stands across the screen, apart from the block.
         return layout.art * BLOCK_SHARE * d - rest
     }
 

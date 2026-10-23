@@ -16,7 +16,6 @@ import io.github.hazymorning.klangbild.data.ha.LocalNetwork
 import io.github.hazymorning.klangbild.speaker.SpeakerStore
 import io.github.hazymorning.klangbild.text.Localizer
 import io.github.hazymorning.klangbild.text.PlatformLanguageStore
-import io.github.hazymorning.klangbild.ui.landscape.releaseBakedLandscape
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
@@ -33,7 +32,7 @@ class AppGraph(context: Context) {
     val scope = CoroutineScope(SupervisorJob() + Dispatchers.Default)
 
     val http: OkHttpClient = OkHttpClient.Builder()
-        // Covers come again (the album's next song, the cover flow): kept on disk as the servers allow.
+        // Covers come again (the album's next song, a step back): kept on disk as the servers allow.
         .cache(Cache(File(context.cacheDir, "http"), HTTP_CACHE_BYTES))
         .connectTimeout(8, TimeUnit.SECONDS)
         .readTimeout(15, TimeUnit.SECONDS)
@@ -91,9 +90,8 @@ class KlangbildApp : Application() {
 
     override fun onTrimMemory(level: Int) {
         super.onTrimMemory(level)
-        // Nothing shows in the background: the covers, the scenes and the landscape's picture
-        // go, and are made again on return.
-        if (level >= TRIM_MEMORY_UI_HIDDEN && graph.controller.releaseMemory()) releaseBakedLandscape()
+        // Nothing shows in the background: the covers and the scenes go, and are made again on return.
+        if (level >= TRIM_MEMORY_UI_HIDDEN) graph.controller.releaseMemory()
     }
 
     override fun onCreate() {

@@ -8,7 +8,6 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import io.github.hazymorning.klangbild.app.UiState
 import io.github.hazymorning.klangbild.art.SyntheticCover
 import io.github.hazymorning.klangbild.color.Appearance
-import io.github.hazymorning.klangbild.config.MiniPlayer
 import io.github.hazymorning.klangbild.domain.LinkState
 import io.github.hazymorning.klangbild.domain.SourceState
 import io.github.hazymorning.klangbild.domain.PlayerStatus
@@ -20,12 +19,9 @@ import io.github.hazymorning.klangbild.lights.LightColors
 import io.github.hazymorning.klangbild.lights.LightSlot
 import io.github.hazymorning.klangbild.render.ArtworkScene
 import io.github.hazymorning.klangbild.text.TestTexts
-import io.github.hazymorning.klangbild.ui.flow.FlowStage
 import io.github.hazymorning.klangbild.ui.stage.FieldTime
 import io.github.hazymorning.klangbild.ui.stage.LocalFieldTime
 import io.github.hazymorning.klangbild.ui.stage.Stage
-import io.github.hazymorning.klangbild.ui.landscape.LandscapeScreen
-import io.github.hazymorning.klangbild.landscape.LandscapeClock
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -114,52 +110,6 @@ class ReadmeShotsTest {
             CompositionLocalProvider(LocalFieldTime provides FieldTime({ 0.0 }, false)) {
                 Stage(Fixtures.model(saltWater, next = neonHighway, positionMs = 71_000L, clock = en.clock(Fixtures.at(21, 51), Fixtures.zone), group = "Living room", scene = scene, t = en))
             }
-        }
-    }
-
-    /** Then Neon Highway in the cover flow: what played before on the left, what comes on the right. */
-    @Test
-    fun coverFlow() {
-        val strip = listOf(polarNight, saltWater, neonHighway, morningFog, desertSong)
-        shot("cover-flow") {
-            val scenes = Fixtures.flowScenes(strip)
-            FlowStage(
-                Fixtures.model(neonHighway, next = morningFog, positionMs = 84_000L, clock = en.clock(Fixtures.at(21, 55), Fixtures.zone), group = "Living room", scene = scenes[2], t = en),
-                Fixtures.restingCards(scenes, 2),
-            )
-        }
-    }
-
-    /** Then Morning Fog with the queue as a list beside it: the songs that come, each with its small cover. */
-    @Test
-    fun queueList() {
-        val coming = listOf(
-            desertSong,
-            TrackInfo("Lantern Field", listOf("Ines Moreau"), "Paper Boats", 2023, 221_000, artworkUrl = cover(SyntheticCover.PASTEL)),
-            TrackInfo("Snowfield", listOf("Ida Holm"), "Northern Lights", 2025, 280_000, artworkUrl = cover(SyntheticCover.AURORA)),
-            TrackInfo("Grey Ridge", listOf("Theo Lind"), "Stone Paths", 2024, 306_000, artworkUrl = cover(SyntheticCover.MIST)),
-            TrackInfo("Blue Hour", listOf("Northern Light Collective"), "Tides", 2023, 247_000, artworkUrl = cover(SyntheticCover.SALT_WATER)),
-        )
-        val scene = Fixtures.scene(morningFog)
-        val list = Fixtures.queueList(coming, remaining = coming.size)
-        shot("queue-list") {
-            Stage(Fixtures.queueModel(morningFog, list, positionMs = 88_000L, clock = en.clock(Fixtures.at(21, 59), Fixtures.zone), group = "Living room", scene = scene, t = en))
-        }
-    }
-
-    /** The landscape on a deep winter night: a thin moon, a sky full of stars, the campfire on the snow; the mini player bottom left. */
-    @Test
-    fun landscapeShot() {
-        val at = ZonedDateTime.of(2026, 1, 22, 19, 15, 0, 0, Fixtures.zone).toInstant().toEpochMilli()
-        val ui = UiState(
-            screen = Screen.Stage(polarNight, PlayerStatus.PAUSED, null),
-            stage = Fixtures.stage(polarNight),
-            source = SourceState(LinkState.CONNECTED, place = 52.52 to 13.40),
-            landscape = Fixtures.landscape(polarNight, PlayerStatus.PAUSED, MiniPlayer.LEFT, "clear-night"),
-        )
-        val landscapeClock = LandscapeClock(now = { at })
-        shot("landscape") {
-            LandscapeScreen(ui, ui.landscape!!, landscapeClock, positionOf = { 94_000L }, now = { at }, modifier = Modifier.fillMaxSize())
         }
     }
 

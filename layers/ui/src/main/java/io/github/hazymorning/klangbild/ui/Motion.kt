@@ -117,12 +117,6 @@ object Motion {
     val Decelerate = CubicBezierEasing(0.16f, 1f, 0.3f, 1f)
 
     /**
-     * The cover flow turning over: a gentle start, an unhurried middle (at most about twice
-     * the average speed) and a long soft landing.
-     */
-    val Turn = CubicBezierEasing(0.35f, 0f, 0.35f, 1f)
-
-    /**
      * A full track change cross-fades, so the screen never goes dark. The new artwork comes up
      * over the old one (0 to 600 ms), and the old goes once it is covered (600 to 750 ms). The
      * light on the wall turns to the new colors (0 to 800 ms). The old text leaves (220 ms); the
@@ -141,22 +135,8 @@ object Motion {
     const val TEXT_CHANGE_MS = 950
     const val TEXT_IN_SAME_PICTURE_MS = 250
 
-    /**
-     * Cover Flow: when another picture comes to the middle, the strip turns over in 1.3 s
-     * ([Turn]). The light above the cards takes the new color (0 to 1100 ms). The old text has
-     * left before the cards gather speed, and the new lines rise from 780 ms, as the new cover
-     * turns to face the room. Cards that make way for others rolling in go first (300 ms).
-     */
-    const val FLOW_TURN_MS = 1_300
-    const val FLOW_LIGHT_MS = 1_100
-    const val FLOW_TEXT_IN_MS = 780
-    const val FLOW_CLEAR_MS = 300
-
     /** A change that something newer is waiting behind finishes within this (ms). */
     const val HURRY_MS = 350
-
-    /** Cards beside the middle come or go (the queue changed). */
-    const val FLOW_SIDES_MS = 900
 
     /** Same track, a better cover. */
     const val SOFT_SWAP_MS = 900

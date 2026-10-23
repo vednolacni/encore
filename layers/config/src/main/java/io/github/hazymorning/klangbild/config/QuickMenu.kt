@@ -32,8 +32,6 @@ enum class FavoriteState {
  * all settings ([SETTINGS]).
  */
 enum class QuickItem(@StringRes val label: Int?) {
-    QUEUE(R.string.quick_queue),
-    LANDSCAPE(R.string.quick_landscape),
     LYRICS(R.string.quick_lyrics),
     PARTY(R.string.quick_party),
     FAVORITE(R.string.quick_favorite),
@@ -74,10 +72,6 @@ enum class ActionState {
 
 /** What the quick settings need to know besides the settings. */
 data class QuickContext(
-    /** The screen shows the landscape. */
-    val landscape: Boolean = false,
-    /** How the queue is to show, chosen with OK and taken once the presses stop. */
-    val pending: QueueDisplay? = null,
     /** Something plays (or is paused) on the stage. */
     val music: Boolean = false,
     /**
@@ -106,9 +100,8 @@ data class QuickContext(
  * says), up leaves the row. Entries that cannot do anything now are left out (no lyrics without
  * Music Assistant or without a song, no favorite without music, no lights before they are set
  * up, no shuffle on a player that cannot, no party code without a party playing here, no button
- * whose entity is unavailable or whose condition does not hold), and the queue's entry passes
- * over its list while Music Assistant is not connected. The buttons set up on the phone come
- * last. The sleep timer lives in the settings.
+ * whose entity is unavailable or whose condition does not hold). The buttons set up on the phone
+ * come last. The sleep timer lives in the settings.
  */
 object QuickMenu {
     /** The quick settings that stand on the stage as buttons in the player's grid. */
@@ -116,8 +109,6 @@ object QuickMenu {
 
     fun rows(s: Settings, ctx: QuickContext, t: Texts): List<QuickRow> = buildList {
         fun row(item: QuickItem, value: String, muted: Boolean = false) = add(QuickRow(QuickKey(item), t[item.label!!], value, values(item, t), muted))
-        row(QuickItem.QUEUE, SettingsMenu.queueValue(ctx.pending ?: s.queue, t))
-        row(QuickItem.LANDSCAPE, t[if (ctx.landscape) R.string.on else R.string.off])
         // On while this song has no synced words: still On, only quieter. A word of its own for
         // that ("None") read as if the words had been switched off.
         if (ctx.lyrics != null) row(QuickItem.LYRICS, lyricsValue(ctx.lyrics, t), muted = ctx.lyrics == LyricsChoice.NONE)
@@ -170,25 +161,9 @@ object QuickMenu {
      * nothing moves when a value changes (for the buttons: what any of them can show).
      */
     fun values(item: QuickItem, t: Texts): List<String> = when (item) {
-        QuickItem.QUEUE -> SettingsMenu.QUEUE_ORDER.map { SettingsMenu.queueValue(it, t) }
         QuickItem.FAVORITE -> FavoriteState.entries.map { favoriteValue(it, t) }
-        QuickItem.LANDSCAPE, QuickItem.LYRICS, QuickItem.LIGHTS, QuickItem.SHUFFLE, QuickItem.PARTY -> listOf(t[R.string.on], t[R.string.off])
+        QuickItem.LYRICS, QuickItem.LIGHTS, QuickItem.SHUFFLE, QuickItem.PARTY -> listOf(t[R.string.on], t[R.string.off])
         QuickItem.ACTION -> ActionKind.entries.flatMap { actionValues(it, t) }.distinct()
         QuickItem.SETTINGS -> listOf(t[R.string.quick_open])
-    }
-
-    /**
-     * How the queue shows after one step from [q] (−1 or +1), from the quietest to the fullest;
-     * [wrap] goes round. The list is passed over while it cannot show ([list] false).
-     */
-    fun step(q: QueueDisplay, direction: Int, wrap: Boolean, list: Boolean): QueueDisplay {
-        val order = SettingsMenu.QUEUE_ORDER
-        var i = order.indexOf(q)
-        repeat(order.size) {
-            i += direction
-            i = if (wrap) Math.floorMod(i, order.size) else i.coerceIn(0, order.size - 1)
-            if (order[i] != QueueDisplay.LIST || list) return order[i]
-        }
-        return q
     }
 }

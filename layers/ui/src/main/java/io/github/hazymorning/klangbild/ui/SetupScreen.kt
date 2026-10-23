@@ -77,11 +77,11 @@ object SetupArt {
     }
 
     fun scene(info: SetupInfo?, screen: ScreenSpec, appearance: Appearance = Appearance.DARK): ArtworkScene {
-        // The code hangs where the artwork would.
-        val layout = StageGrid(screen)
+        // The code hangs where the artwork would, in the setup page's own grid.
+        val layout = StageGrid(screen, centered = true)
         val px = (layout.art * screen.density).toInt()
         val card = card(info?.qr, px, appearance)
-        return SceneBuilder.build("setup|${info?.url}|${info?.code}", card, "setup", screen, appearance)
+        return SceneBuilder.build("setup|${info?.url}|${info?.code}", card, "setup", screen, appearance, layout = layout)
     }
 
     /** "http://192.168.1.23:8765" → "192.168.1.23:8765" (what people actually type). */

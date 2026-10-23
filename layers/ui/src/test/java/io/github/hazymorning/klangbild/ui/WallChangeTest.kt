@@ -23,9 +23,7 @@ import org.robolectric.annotation.GraphicsMode
 /**
  * At sunset the stage turns from paper to the dark wall in one cross-fade, its lines with it: a
  * few frames in they are still the dark lines on paper, and once the wall is dark they are the
- * light ones (until 2026.10 the light lines stood at once on the single stage, and the status
- * line beside a single cover and in Cover Flow, a pale ghost of the title on the still-light
- * paper).
+ * light ones, never a pale ghost of the title on the still-light paper.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -42,22 +40,7 @@ class WallChangeTest {
         var stage by mutableStateOf(StageData(track, Fixtures.scene(track, mdpi, Appearance.LIGHT)))
         compose.mainClock.autoAdvance = false
         compose.setContent { Fixtures.Theater(stage, PlayerStatus.PLAYING, group = "Wohnzimmer") }
-        sunset(column = Region(520, 80, 880, 470)) { stage = StageData(track, Fixtures.scene(track, mdpi, Appearance.DARK)) }
-    }
-
-    @Test
-    fun coverFlowStatusLineCrossFadesWithTheWall() {
-        val covers = listOf(SyntheticCover.TERRACOTTA, SyntheticCover.NOCTURNE, SyntheticCover.MOSS)
-        fun flow(wall: Appearance) = Fixtures.flow(
-            covers.mapIndexed { i, c -> i.toLong() to Fixtures.scene(Fixtures.track(c), mdpi, appearance = wall, flow = true) }.toMap(),
-            listOf(0L, 1L, 2L),
-            1L,
-        )
-        var strip by mutableStateOf(flow(Appearance.LIGHT))
-        compose.mainClock.autoAdvance = false
-        compose.setContent { Fixtures.FlowTheaterOf(strip) }
-        // The status line: the topmost line of ink in the text column.
-        sunset(region = { b -> topLine(b, 560, 940) }) { strip = flow(Appearance.DARK) }
+        sunset(column = Region(450, 60, 870, 330)) { stage = StageData(track, Fixtures.scene(track, mdpi, Appearance.DARK)) }
     }
 
     private fun sunset(column: Region, change: () -> Unit) = sunset({ column }, change)

@@ -4,8 +4,6 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import io.github.hazymorning.klangbild.art.SyntheticCover
 import io.github.hazymorning.klangbild.color.Appearance
-import io.github.hazymorning.klangbild.config.MiniPlayer
-import io.github.hazymorning.klangbild.config.QueueDisplay
 import io.github.hazymorning.klangbild.domain.PlayerStatus
 import io.github.hazymorning.klangbild.domain.RestReason
 import io.github.hazymorning.klangbild.domain.Screen
@@ -18,11 +16,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * After the clock, the setup page or the landscape, a song other than the one the stage kept
- * waits for its own scene, and so does the same song when the wall has changed meanwhile or the
- * queue has gone to or from Cover Flow: the stage left from before never comes up for it (until 2026.10 the song before
- * came up first and the lights took its colors). Meanwhile the clock or the landscape stays,
- * never the dark; over the landscape the song keys act on what plays. A screen that says
+ * After the clock or the setup page, a song other than the one the stage kept waits for its own
+ * scene, and so does the same song when the wall has changed meanwhile: the stage left from
+ * before never comes up for it. Meanwhile the clock stays, never the dark. A screen that says
  * something is wrong and the setup page go through the dark.
  */
 @RunWith(AndroidJUnit4::class)
@@ -35,12 +31,10 @@ class HeldStageTest {
     private val dark = Look(Appearance.DARK, 1f)
     private val onStage = UiState(screen = playing(a.track), stage = a)
     private val clock = onStage.copy(screen = Screen.Rest(RestReason.PAUSED, "Wohnzimmer"))
-    private val landscape = onStage.copy(landscape = Fixtures.landscape(a.track, PlayerStatus.PAUSED, MiniPlayer.LEFT))
 
     private fun playing(t: TrackInfo) = Screen.Stage(t, PlayerStatus.PLAYING, null)
 
-    private fun stale(before: UiState, stage: Screen.Stage?, flow: Boolean = false, look: Look = dark, landscape: Boolean = false) =
-        HeldStage.stale(before, flow, look::fits, stage, landscape)
+    private fun stale(before: UiState, stage: Screen.Stage?, look: Look = dark) = HeldStage.stale(before, look::fits, stage)
 
     @Test
     fun aNewSongAfterTheClockNeverShowsTheStageBefore() {
@@ -55,10 +49,7 @@ class HeldStageTest {
     }
 
     @Test
-    fun norAfterTheLandscapeOrTheSetupPage() {
-        assertThat(stale(landscape, playing(b))).isTrue()
-        // While the landscape still shows, the stage behind it is made ready meanwhile.
-        assertThat(stale(landscape, playing(b), landscape = true)).isFalse()
+    fun norAfterTheSetupPage() {
         val setup = onStage.copy(screen = Screen.Setup(SetupReason.REQUESTED))
         assertThat(stale(setup, playing(b))).isTrue()
     }
@@ -66,20 +57,6 @@ class HeldStageTest {
     @Test
     fun onTheStageTheStageBeforeStaysUntilTheNextSceneIsReady() {
         assertThat(stale(onStage, playing(b))).isFalse()
-    }
-
-    @Test
-    fun coverFlowIsKeptTheSameWay() {
-        val flow = FlowData(listOf(FlowEntry(0L, a.track, a.scene)), 0)
-        val idle = UiState(screen = Screen.Rest(RestReason.IDLE), queue = QueueDisplay.FLOW, flow = flow)
-        assertThat(stale(idle, playing(b), flow = true)).isTrue()
-        assertThat(stale(idle, playing(a.track), flow = true)).isFalse()
-    }
-
-    @Test
-    fun aSwitchToCoverFlowMeanwhileNeverBringsBackTheSingleCover() {
-        // Cover Flow was chosen over the clock: the single cover kept from before stays away.
-        assertThat(stale(clock, playing(a.track), flow = true)).isTrue()
     }
 
     @Test
@@ -107,18 +84,6 @@ class HeldStageTest {
         val idle = UiState(screen = Screen.Rest(RestReason.IDLE, "Wohnzimmer"))
         val waiting = UiState(screen = playing(b))
         assertThat(HeldStage.shown(idle, waiting).screen).isEqualTo(idle.screen)
-    }
-
-    @Test
-    fun theLandscapeStaysTooAndTheSongKeysActOnWhatPlays() {
-        val waiting = UiState(screen = playing(b))
-        val first = HeldStage.shown(landscape, waiting)
-        assertThat(first.landscape).isEqualTo(landscape.landscape)
-        assertThat(first.screen).isEqualTo(waiting.screen)
-        assertThat(HeldStage.shown(first, waiting).landscape).isEqualTo(landscape.landscape)
-        // A landscape chosen meanwhile ends the wait: it shows as it is.
-        val chosen = waiting.copy(landscape = Fixtures.landscape(b, PlayerStatus.PLAYING, MiniPlayer.LEFT))
-        assertThat(HeldStage.shown(first, chosen)).isSameInstanceAs(chosen)
     }
 
     @Test

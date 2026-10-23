@@ -40,7 +40,6 @@ import io.github.hazymorning.klangbild.color.Appearance
 import io.github.hazymorning.klangbild.color.Lamp
 import io.github.hazymorning.klangbild.domain.PlayerStatus
 import io.github.hazymorning.klangbild.domain.TimeText
-import io.github.hazymorning.klangbild.render.FlowLight
 import io.github.hazymorning.klangbild.render.ArtworkScene
 import io.github.hazymorning.klangbild.render.StageGrid
 import io.github.hazymorning.klangbild.ui.Motion
@@ -82,10 +81,7 @@ const val BEYOND_EDGES_DP = 24f
  * The wall around the artwork, one static bitmap scaled softly to the screen. In the dark it is
  * the artwork's light ([io.github.hazymorning.klangbild.render.WallGlow]), and [level] is its
  * brightness in linear light (pause, the Intensity setting: 0 = off, 1 = as designed,
- * 1.45 = strong). In the light it is plain paper. [alpha] fades the layer
- * during a change; [shift] moves the light with the cover flow's cards (dp), the cover's colors
- * stay where they are. In Cover Flow's dark the light fades out before the text column, wherever
- * it stands ([column]: its shift from the grid, dp).
+ * 1.45 = strong). In the light it is plain paper. [alpha] fades the layer during a change.
  */
 @Composable
 fun WallLayer(
@@ -93,17 +89,12 @@ fun WallLayer(
     modifier: Modifier = Modifier,
     alpha: () -> Float = { 1f },
     level: () -> Float = { 1f },
-    shift: () -> Float = { 0f },
-    column: () -> Float = { 0f },
 ) {
     // With the cover colors background, the cover's own colors are the wall.
     if (scene.coverField) return FieldLayer(scene, modifier, alpha, level)
     val image = remember(scene) { scene.wall.asImageBitmap() }
     val filters = remember { HashMap<Int, ColorFilter?>() }
     val lit = scene.appearance == Appearance.DARK
-    val beside = lit && scene.layout.flow
-    val density = LocalDensity.current.density
-    val shade = remember(density) { columnShade(density) }
     Canvas(modifier.fillMaxSize()) {
         val a = alpha().coerceIn(0f, 1f)
         val l = if (lit) level().coerceIn(0f, 2f) else 1f
@@ -113,34 +104,13 @@ fun WallLayer(
         val filter = filters.getOrPut(step) { if (step == 40) null else scaleFilter(step / 40f) }
         drawImage(
             image,
-            dstOffset = IntOffset((shift() * density).roundToInt(), 0),
             dstSize = IntSize(size.width.roundToInt(), size.height.roundToInt()),
             alpha = a,
             colorFilter = filter,
             filterQuality = FilterQuality.Low,
         )
-        if (!beside) return@Canvas
-        // Black laid over the light from where it starts to fade before the column to beyond the edge.
-        val start = (scene.layout.columnLeft + column() - FlowLight.WHOLE_BEFORE_COLUMN) * density
-        val m = BEYOND_EDGES_DP * density
-        translate(left = start) {
-            drawRect(shade, topLeft = Offset(0f, -m), size = Size(size.width - start + m, size.height + 2 * m), alpha = a)
-        }
     }
 }
-
-/** The black over the cover flow's light toward the text column, from where it starts to fade ([FlowLight.shade]). */
-private fun columnShade(density: Float): Brush {
-    val ramp = (FlowLight.WHOLE_BEFORE_COLUMN - FlowLight.GONE_BEFORE_COLUMN) * density
-    val stops = Array(SHADE_STOPS + 1) { i ->
-        val t = i / SHADE_STOPS.toFloat()
-        t to Color.Black.copy(alpha = FlowLight.shade(t))
-    }
-    return Brush.horizontalGradient(*stops, startX = 0f, endX = ramp)
-}
-
-/** Steps of the shade's ramp: a smooth curve, closely enough. */
-private const val SHADE_STOPS = 24
 
 private fun scaleFilter(k: Float) = ColorFilter.colorMatrix(
     ColorMatrix(floatArrayOf(k, 0f, 0f, 0f, 0f, 0f, k, 0f, 0f, 0f, 0f, 0f, k, 0f, 0f, 0f, 0f, 0f, 1f, 0f)),
@@ -215,13 +185,11 @@ fun coverScale(dim: Float = 1f, appearance: Appearance = Appearance.DARK): Tripl
 /**
  * The text block beside the artwork, centered on it from the first line's cap height to the
  * last baseline: (work), title, (version), artist, album · year, then the progress bar (or the
- * station, or a notice). What comes next sits apart on the artwork's bottom edge. [alpha] and
- * [rise] animate a change line by line; [dim] darkens the text while paused; [shift] moves the
- * column to the right of its place in the grid (dp: a cover flow with cards missing). While the
- * song's words take the column ([StageModel.lyrics]), they stand there instead ([LyricsText]);
- * while the queue shows as a list ([StageModel.queue]), the song stands above it ([QueueText]),
- * its rows drawn too unless a theater draws them itself ([rows] false). [pictureDim] darkens
- * the rows' small covers as the cover is darkened.
+ * station, or a notice), the bar standing across the screen under the artwork. What comes next
+ * sits apart on the artwork's bottom edge. [alpha] and [rise] animate a change line by line;
+ * [dim] darkens the text while paused; [shift] moves the column to the right of its place in the
+ * grid (dp). While the song's words take the column ([StageModel.lyrics]), they stand there
+ * instead ([LyricsText]).
  */
 @Composable
 internal fun TextLayer(
@@ -232,17 +200,10 @@ internal fun TextLayer(
     rise: (TextLine) -> Float = { 0f },
     dim: () -> Float = { 1f },
     shift: () -> Float = { 0f },
-    queuePlan: QueuePlan? = rememberQueuePlan(model),
-    rows: Boolean = true,
-    pictureDim: () -> Float = dim,
 ) {
     val lyrics = model.lyrics
     if (lyrics != null) {
         LyricsText(model, lyrics, modifier, alpha, rise, dim, shift)
-        return
-    }
-    if (queuePlan != null) {
-        QueueText(model, queuePlan, modifier, alpha, rise, dim, shift, rows, pictureDim)
         return
     }
     val layout = model.scene.layout
@@ -297,16 +258,14 @@ internal fun TextLayer(
         },
     ) { measurables, constraints ->
         val c = Constraints(maxWidth = colW)
-        val cBottom = Constraints(minWidth = colW, maxWidth = colW)
         val work = measurables[0].measure(c)
         val title = measurables[1].measure(c)
         val version = measurables[2].measure(c)
         val artist = measurables[3].measure(c)
         val album = measurables[4].measure(c)
-        // In the player's grid the bar (or a line in its place) stands across the screen.
-        val player = layout.player
+        // The bar (or a line in its place) stands across the screen.
         val barW = (layout.barWidth * density).roundToInt()
-        val bottom = measurables[5].measure(if (player) Constraints(minWidth = barW, maxWidth = barW) else cBottom)
+        val bottom = measurables[5].measure(Constraints(minWidth = barW, maxWidth = barW))
         val nextLine = measurables[6].measure(c)
         fun px(dp: Float) = (dp * density).roundToInt()
         fun capOf(style: TextStyle) = (style.fontSize.toPx() * Fonts.CAP_HEIGHT).roundToInt()
@@ -326,18 +285,6 @@ internal fun TextLayer(
         text(version, plan.versionStyle, Gaps.VERSION)
         text(artist, plan.artistStyle, Gaps.ARTIST)
         text(album, block.album, Gaps.ALBUM)
-        if (bottom.height > 0 && !player) {
-            // The bar block measures from the bar's top to the labels' baseline; a line of
-            // text in its place is aligned by its own cap height.
-            val isText = bottomLine != null
-            val first = if (isText) bottom[FirstBaseline].takeIf { it != AlignmentLine.Unspecified } ?: bottom.height else 0
-            parts += Part(
-                bottom,
-                capTop = if (isText) first - capOf(styles.label) else 0,
-                baseline = if (isText) first else bottom.height,
-                gap = if (parts.isEmpty()) 0 else px(Gaps.BOTTOM),
-            )
-        }
         // Positions of each cap height, relative to the first one.
         var y = 0
         val capY = IntArray(parts.size)
@@ -353,12 +300,12 @@ internal fun TextLayer(
         // The last line's descenders end where the column ends.
         val footer = (layout.footerBottom * density - styles.next.fontSize.toPx() * Fonts.DESCENT).roundToInt()
         val barLeft = (layout.barLeft * density).roundToInt()
-        val across = if (player) acrossTop(bottom, bottomLine != null, layout, styles, this) else 0
+        val across = acrossTop(bottom, bottomLine != null, layout, styles, this)
         layout(constraints.maxWidth, constraints.maxHeight) {
             // Read while placing: a column that glides is only placed anew.
             val x = ((layout.columnLeft + shift()) * density).roundToInt()
             parts.forEachIndexed { i, part -> part.p.place(x + part.dx, top + capY[i] - part.capTop) }
-            if (player && bottom.height > 0) bottom.place(barLeft, across)
+            if (bottom.height > 0) bottom.place(barLeft, across)
             if (nextLine.height > 0) {
                 val b = nextLine[FirstBaseline].takeIf { it != AlignmentLine.Unspecified } ?: nextLine.height
                 nextLine.place(x, footer - b)
@@ -369,7 +316,7 @@ internal fun TextLayer(
 
 
 /**
- * The player's grid: the top (px) of what stands in the progress bar's place across the screen
+ * The top (px) of what stands in the progress bar's place across the screen
  * ([p], measured as wide as the bar). The bar's block ends at its times' baseline, which stands
  * on [StageGrid.timesBaseline]; a line of words in its place has its cap height where the bar's
  * top would be.
@@ -385,7 +332,7 @@ internal fun acrossTop(p: Placeable, isText: Boolean, layout: StageGrid, styles:
 
 /**
  * What comes next after its [lead] ("Up next"); a new one (the next chapter, while a book plays
- * on, or the hint for the quick settings) cross-fades in place, and so does one that comes or
+ * on) cross-fades in place, and so does one that comes or
  * goes ([text] null: none).
  */
 @Composable

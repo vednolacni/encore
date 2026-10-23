@@ -104,42 +104,14 @@ class LaunchExtrasTest {
     }
 
     @Test
-    fun `the landscape from extras and links`() {
-        val s = LaunchExtras.applyTo(
-            Settings(),
-            mapOf("fensterblick_pause" to "30", "fensterblick_musik" to 600, "mini_player" to "rechts", "weather" to "weather.home"),
-        )
-        assertThat(s.landscapePauseSeconds).isEqualTo(30)
-        assertThat(s.landscapePlayingSeconds).isEqualTo(600)
-        assertThat(s.miniPlayer).isEqualTo(MiniPlayer.RIGHT)
-        assertThat(s.weatherEntities).containsExactly("weather.home")
-        val off = LaunchExtras.applyTo(s, mapOf("fensterblick_pause" to "aus", "mini_player" to "aus", "weather" to "keine"))
-        assertThat(off.landscapePauseSeconds).isEqualTo(0)
-        assertThat(off.miniPlayer).isEqualTo(MiniPlayer.OFF)
-        assertThat(off.weatherEntities).isEmpty()
-        // Out of range or the wrong kind of entity: ignored.
-        assertThat(LaunchExtras.applyTo(s, mapOf("fensterblick_pause" to "99999", "weather" to "sensor.x"))).isEqualTo(s)
-        assertThat(LaunchExtras.session(mapOf("fensterblick" to "an")).landscape).isEqualTo(LandscapeRequest.SHOW)
-        assertThat(LaunchExtras.session(mapOf("fensterblick" to "zeitraffer")).landscape).isEqualTo(LandscapeRequest.TIMELAPSE)
-        assertThat(LaunchExtras.session(mapOf("fensterblick" to "aus")).landscape).isEqualTo(LandscapeRequest.HIDE)
-        // A link may show it and set its options. The weather entity stays with the setup page.
-        val link = LaunchExtras.fromLink(mapOf("fensterblick" to "an", "mini_player" to "links", "weather" to "weather.x"))
-        assertThat(link.keys).containsExactly("fensterblick", "mini_player")
-    }
-
-    @Test
     fun `English names and values, with those of earlier versions still taken`() {
         val s = LaunchExtras.applyTo(
             Settings(),
             mapOf(
-                "landscape_pause" to "15", "landscape_playing" to "off", "mini_player" to "bottom_right",
                 "lights_left" to "light.tv_left", "lights_right" to "light.tv_right", "lights_level" to "70",
                 "motion" to "slow", "background" to "plain", "light" to "subtle",
             ),
         )
-        assertThat(s.landscapePauseSeconds).isEqualTo(15)
-        assertThat(s.landscapePlayingSeconds).isEqualTo(0)
-        assertThat(s.miniPlayer).isEqualTo(MiniPlayer.RIGHT)
         assertThat(s.roomLights).isEqualTo(RoomLights("light.tv_left", null, "light.tv_right"))
         assertThat(s.roomLightBrightness).isEqualTo(RoomLightBrightness.P70)
         assertThat(s.motion).isEqualTo(MotionLevel.GENTLE)
@@ -149,48 +121,16 @@ class LaunchExtrasTest {
         val german = LaunchExtras.applyTo(
             Settings(),
             mapOf(
-                "fensterblick_pause" to "15", "fensterblick_musik" to "aus", "mini_player" to "unten_rechts",
                 "bars_left" to "light.tv_left", "bars_right" to "light.tv_right", "bar_level" to "70",
                 "motion" to "langsam", "background" to "einfarbig", "light" to "dezent",
             ),
         )
         assertThat(german).isEqualTo(s)
-        // The landscape was the window view until 6.3: its names then still count.
-        assertThat(LaunchExtras.applyTo(Settings(), mapOf("window_view_pause" to "15", "window_view_playing" to "off")).landscapePauseSeconds).isEqualTo(15)
-        assertThat(LaunchExtras.session(mapOf("window_view" to "on")).landscape).isEqualTo(LandscapeRequest.SHOW)
-        // Both given: the current name counts.
-        assertThat(LaunchExtras.applyTo(Settings(), mapOf("landscape_pause" to "30", "window_view_pause" to "60", "fensterblick_pause" to "90")).landscapePauseSeconds).isEqualTo(30)
-        assertThat(LaunchExtras.session(mapOf("landscape" to "on")).landscape).isEqualTo(LandscapeRequest.SHOW)
-        assertThat(LaunchExtras.session(mapOf("landscape" to "timelapse")).landscape).isEqualTo(LandscapeRequest.TIMELAPSE)
-        assertThat(LaunchExtras.session(mapOf("landscape" to "off")).landscape).isEqualTo(LandscapeRequest.HIDE)
         assertThat(LaunchExtras.hasStoredExtras(mapOf("lights_level" to "50"))).isTrue()
         assertThat(LaunchExtras.hasStoredExtras(mapOf("bar_level" to "50"))).isTrue()
         // A link may set the lights' level, never which lights.
-        assertThat(LaunchExtras.fromLink(mapOf("lights_level" to "50", "lights_left" to "light.x", "landscape" to "on")).keys)
-            .containsExactly("lights_level", "landscape")
-    }
-
-    @Test
-    fun `how the queue shows is taken by its own name, and by the name earlier versions gave it`() {
-        // Each from a setting it changes, so a value that is not taken shows.
-        fun queue(vararg extras: Pair<String, String>, from: QueueDisplay = QueueDisplay.FLOW) =
-            LaunchExtras.applyTo(Settings(queue = from), mapOf(*extras)).queue
-        assertThat(queue("queue" to "list")).isEqualTo(QueueDisplay.LIST)
-        assertThat(queue("queue" to "Cover Flow", from = QueueDisplay.LIST)).isEqualTo(QueueDisplay.FLOW)
-        assertThat(queue("queue" to "off")).isEqualTo(QueueDisplay.OFF)
-        assertThat(queue("queue" to "liste")).isEqualTo(QueueDisplay.LIST)
-        // Earlier versions called it the view, and its single cover is the queue off.
-        assertThat(queue("view" to "single", from = QueueDisplay.LIST)).isEqualTo(QueueDisplay.OFF)
-        assertThat(queue("view" to "flow", from = QueueDisplay.OFF)).isEqualTo(QueueDisplay.FLOW)
-        assertThat(queue("view" to "einzelbild")).isEqualTo(QueueDisplay.OFF)
-        // Both given: the queue's own name counts.
-        assertThat(queue("view" to "flow", "queue" to "list")).isEqualTo(QueueDisplay.LIST)
-        // A value it does not know leaves the setting as it was.
-        assertThat(queue("queue" to "sideways")).isEqualTo(QueueDisplay.FLOW)
-        assertThat(queue("queue" to "sideways", from = QueueDisplay.LIST)).isEqualTo(QueueDisplay.LIST)
-        // A link may set it, under either name.
-        assertThat(LaunchExtras.fromLink(mapOf("queue" to "list", "view" to "flow")).keys).containsExactly("queue", "view")
-        assertThat(LaunchExtras.hasStoredExtras(mapOf("queue" to "list"))).isTrue()
+        assertThat(LaunchExtras.fromLink(mapOf("lights_level" to "50", "lights_left" to "light.x")).keys)
+            .containsExactly("lights_level")
     }
 
     @Test

@@ -73,12 +73,10 @@ import kotlin.math.roundToInt
  * ink. The lines before and after it are quiet and fade with distance, as the settings list does.
  * As the song moves on, the list glides one step, and the light goes with it: the line that comes
  * is lit as it arrives, the one before dims as it leaves. A break in the singing only dims the
- * line; a jump cross-fades the list to its new place. The status line keeps its place; title and
- * artist stand where "Up next" stands; the progress bar comes back for a moment after a key,
- * above them. A song's words are set once, in one size (the largest its longest line allows),
- * off the main thread; a frame only moves the list and mixes two inks. In the player's grid the
- * song's title and artist stand under the cover instead, and the bar stands across the screen
- * below everything, where the words never reach.
+ * line; a jump cross-fades the list to its new place. The status line keeps its place; the
+ * song's title and artist stand under the cover, and the bar stands across the screen below
+ * everything, where the words never reach. A song's words are set once, in one size (the largest
+ * its longest line allows), off the main thread; a frame only moves the list and mixes two inks.
  */
 
 /** One size for a song's words: [size] sp, a line on at most [rows] rows, [leading] between rows. */
@@ -281,10 +279,9 @@ internal val LocalLyricsViews = staticCompositionLocalOf<LyricsViews?> { null }
 
 /**
  * The text column with the song's words ([TextLayer] while [StageModel.lyrics] is set): the words
- * in the middle, the song's title and artist at the bottom, and the progress bar (or a notice)
- * above them while it shows. In the player's grid the song stands under the cover, its title over
- * its artist, and the bar across the screen. [alpha] and [rise] animate a change as for the text
- * block: the words as the title, the bar as the bottom line, the song as what comes next.
+ * in the middle, the song under the cover, its title over its artist, and the bar across the
+ * screen. [alpha] and [rise] animate a change as for the text block: the words as the title, the
+ * bar as the bottom line, the song as what comes next.
  */
 @Composable
 internal fun LyricsText(
@@ -320,10 +317,6 @@ internal fun LyricsText(
 
     val bottomLine = model.line
     val slot = bottomOf(model)
-    // While the bar or a notice shows above the song, the words make room for it.
-    val slotShown = animateFloatAsState(if (slot != null) 1f else 0f, tween(Motion.LINE_FADE_MS, easing = Motion.Dimmer), label = "lyrics-slot")
-    val colW = (layout.columnWidth * LocalDensity.current.density).roundToInt()
-    val player = layout.player
     val artW = (layout.art * LocalDensity.current.density).roundToInt()
 
     fun line(which: TextLine): Modifier = Modifier.lineMotion(which, alpha, rise)
@@ -340,7 +333,7 @@ internal fun LyricsText(
                 if (a <= 0.002f) return@Canvas
                 val x = (((layout.columnLeft + shift()) * density).roundToInt() + p.indent).toFloat()
                 val focus = layout.textCenter * density + (rise(TextLine.TITLE) * density).roundToInt()
-                val below = room.below(slotShown.value)
+                val below = room.below
                 val glow = view.lit.value
                 // A jump: the words that stood go first, then the new ones come (never both at once).
                 val j = view.jump.value
@@ -351,55 +344,35 @@ internal fun LyricsText(
             }
             // 1: the progress bar or a notice, above the song; changes cross-fade
             BottomLine(slot, model, styles, playing, line(TextLine.BOTTOM), label = "lyrics-slot-line")
-            if (player) {
-                // 2, 3: the song under the cover, its title over its artist, each on one line
-                val caption = rememberCaption(model, styles, artW)
-                BasicText(caption.first, line(TextLine.NEXT), style = styles.captionTitle, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                val artist = caption.second
-                if (artist != null) BasicText(artist, line(TextLine.NEXT), style = styles.captionArtist, maxLines = 1, overflow = TextOverflow.Ellipsis) else Box(Modifier)
-            } else {
-                // 2: the song itself, where "Up next" stands
-                val song = model.next?.let { fitSong(it, model.nextTitle, styles, colW) }
-                if (song != null) BasicText(songText(song), line(TextLine.NEXT), style = styles.next, maxLines = 1, overflow = TextOverflow.Ellipsis) else Box(Modifier)
-                Box(Modifier)
-            }
+            // 2, 3: the song under the cover, its title over its artist, each on one line
+            val caption = rememberCaption(model, styles, artW)
+            BasicText(caption.first, line(TextLine.NEXT), style = styles.captionTitle, maxLines = 1, overflow = TextOverflow.Ellipsis)
+            val artist = caption.second
+            if (artist != null) BasicText(artist, line(TextLine.NEXT), style = styles.captionArtist, maxLines = 1, overflow = TextOverflow.Ellipsis) else Box(Modifier)
         },
     ) { measurables, constraints ->
         val words = measurables[0].measure(constraints)
         val barW = (layout.barWidth * density).roundToInt()
-        val bottom = measurables[1].measure(if (player) Constraints(minWidth = barW, maxWidth = barW) else Constraints(minWidth = colW, maxWidth = colW))
-        val song = measurables[2].measure(Constraints(maxWidth = if (player) artW else colW))
+        val bottom = measurables[1].measure(Constraints(minWidth = barW, maxWidth = barW))
+        val song = measurables[2].measure(Constraints(maxWidth = artW))
         val artist = measurables[3].measure(Constraints(maxWidth = artW))
-        // The song's descenders end where the column ends; the bar's labels (or a notice) stand above it.
-        val footer = (layout.footerBottom * density - styles.next.fontSize.toPx() * Fonts.DESCENT).roundToInt()
-        val slotBaseline = footer - (styles.next.fontSize.toPx() * Fonts.CAP_HEIGHT).roundToInt() - (Gaps.BOTTOM * density).roundToInt()
-        // The player's grid: the title's cap height a little under the cover, the artist under it.
+        // The title's cap height a little under the cover, the artist under it.
         fun Placeable.first() = this[FirstBaseline].takeIf { it != AlignmentLine.Unspecified } ?: height
         val captionBaseline = (layout.captionTop * density).roundToInt() + (styles.captionTitle.fontSize.toPx() * Fonts.CAP_HEIGHT).roundToInt()
         val artistBaseline = captionBaseline + (CAPTION_ARTIST_GAP * density).roundToInt() + (styles.captionArtist.fontSize.toPx() * Fonts.CAP_HEIGHT).roundToInt()
-        val across = if (player) acrossTop(bottom, bottomLine != null, layout, styles, this) else 0
+        val across = acrossTop(bottom, bottomLine != null, layout, styles, this)
         layout(constraints.maxWidth, constraints.maxHeight) {
             words.place(0, 0)
-            if (player) {
-                val left = (layout.margin * density).roundToInt()
-                if (bottom.height > 0) bottom.place((layout.barLeft * density).roundToInt(), across)
-                if (song.height > 0) song.place(left + (opticalIndent(styles.captionTitle.fontSize.value) * density).roundToInt(), captionBaseline - song.first())
-                if (artist.height > 0) artist.place(left, artistBaseline - artist.first())
-                return@layout
-            }
-            // Read while placing: a column that glides is only placed anew.
-            val x = ((layout.columnLeft + shift()) * density).roundToInt()
-            if (bottom.height > 0) {
-                val baseline = if (bottomLine != null) bottom.first() else bottom.height
-                bottom.place(x, slotBaseline - baseline)
-            }
-            if (song.height > 0) song.place(x, footer - song.first())
+            val left = (layout.margin * density).roundToInt()
+            if (bottom.height > 0) bottom.place((layout.barLeft * density).roundToInt(), across)
+            if (song.height > 0) song.place(left + (opticalIndent(styles.captionTitle.fontSize.value) * density).roundToInt(), captionBaseline - song.first())
+            if (artist.height > 0) artist.place(left, artistBaseline - artist.first())
         }
     }
 }
 
 /**
- * The player's grid: the song's title and artist for the room under the cover ([width] px), each
+ * The song's title and artist for the room under the cover ([width] px), each
  * on one line. A title too long ends after a whole word; of the artists the most complete form
  * that fits.
  */
@@ -436,19 +409,12 @@ private fun rememberLyricsPlan(view: LyricsView, layout: StageGrid, place: () ->
 }
 
 /**
- * The room of the words above and below the middle (dp): to the status line's baseline, and to
- * the song's cap height, or to the bar's top while it shows.
+ * The room of the words above and below the middle (dp): up to the status line's baseline, and
+ * down to the bar across the screen, which the words never reach.
  */
 private class LyricsRoom(layout: StageGrid, styles: StageStyles) {
     val above: Float = layout.textCenter - (layout.statusTop + styles.label.fontSize.value * Fonts.CAP_HEIGHT)
-    private val song = layout.footerBottom - styles.next.fontSize.value * (Fonts.DESCENT + Fonts.CAP_HEIGHT) - layout.textCenter
-    private val bar = song - Gaps.BOTTOM - BAR_BLOCK
-
-    /** The player's grid: down to the bar across the screen, which the words never reach. */
-    private val player = if (!layout.player) null else layout.timesBaseline - BAR_BLOCK - Gaps.BOTTOM - layout.textCenter
-
-    /** Below the middle, as far as the bar lets them while it shows ([slot] 0 to 1). */
-    fun below(slot: Float): Float = player ?: (song + (bar - song) * slot)
+    val below: Float = layout.timesBaseline - BAR_BLOCK - Gaps.BOTTOM - layout.textCenter
 }
 
 /**
@@ -518,19 +484,8 @@ private fun glowOf(plan: LyricsPlan, line: Int, scroll: Float): Float {
     return (1f - abs(off) / step).coerceIn(0f, 1f)
 }
 
-/** The song as "Up next" names a song: title and artist, or the title alone rather than a cut-off artist. */
-@Composable
-private fun fitSong(full: String, title: String?, styles: StageStyles, width: Int): String {
-    val measurer = rememberTextMeasurer(cacheSize = 4)
-    return remember(full, title, styles, width) {
-        if (title == null || measurer.measure(songText(full), styles.next, maxLines = 1, softWrap = false).size.width <= width) full else title
-    }
-}
 
-/** The song's line, isolated if right-to-left (as "Up next" sets what comes). */
-private fun songText(text: String): AnnotatedString = AnnotatedString(if (isRightToLeft(text)) "\u2067$text\u2069" else text)
-
-/** The player's grid: from the title's baseline under the cover to its artist's cap height (dp). */
+/** From the title's baseline under the cover to its artist's cap height (dp). */
 private const val CAPTION_ARTIST_GAP = 12f
 
 /** The space from a line's last baseline to the next line's cap height (em of the words). */

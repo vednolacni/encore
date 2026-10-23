@@ -35,7 +35,6 @@ dependencies {
     implementation(projects.color)
     implementation(projects.config)
     implementation(projects.domain)
-    implementation(projects.landscape)
     implementation(projects.math)
     implementation(projects.render)
     implementation(projects.setup)
@@ -65,9 +64,7 @@ dependencies {
     testImplementation(libs.kotlinx.serialization.json)
     testImplementation(libs.roborazzi)
     testImplementation(libs.roborazzi.compose)
-    // The party code read back from the pixels (PartyCodeTest), the sun's times for the
-    // landscape's gallery (LandscapeGalleryTest).
+    // The party code read back from the pixels (PartyCodeTest).
     testImplementation(libs.zxing.core)
-    testImplementation(libs.suncalc)
     debugImplementation(libs.compose.ui.test.manifest)
 }

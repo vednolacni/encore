@@ -17,7 +17,6 @@ import androidx.compose.ui.unit.dp
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import io.github.hazymorning.klangbild.art.SyntheticCover
-import io.github.hazymorning.klangbild.color.Appearance
 import io.github.hazymorning.klangbild.domain.PlayerStatus
 import io.github.hazymorning.klangbild.render.ScreenSpec
 import org.junit.Rule
@@ -28,8 +27,7 @@ import org.robolectric.annotation.GraphicsMode
 import kotlin.math.abs
 
 /**
- * Only another song hurries a running change: a card that joins the strip or a better cover
- * waits until the change has landed. Two theaters side by side play the same change; one of
+ * Only another song hurries a running change: a better cover waits until the change has landed. Two theaters side by side play the same change; one of
  * them gets something more 300 ms into it, and 800 ms in they are compared.
  */
 @RunWith(AndroidJUnit4::class)
@@ -40,12 +38,6 @@ class HurryTest {
     val compose = composeRule()
 
     private val mdpi = ScreenSpec(960, 540, 1f)
-
-    private val covers = listOf(SyntheticCover.TERRACOTTA, SyntheticCover.MOSS, SyntheticCover.NIGHT_DRIVE, SyntheticCover.WHITE_SPACE, SyntheticCover.BAUHAUS)
-
-    private val strip by lazy {
-        covers.mapIndexed { i, c -> i.toLong() to Fixtures.scene(Fixtures.track(c), mdpi, appearance = Appearance.DARK, flow = true) }.toMap()
-    }
 
     /** Both theaters go from [first] to [change]; the second gets [more] 300 ms later. Returns both, 800 ms into the change. */
     private fun <T> sideBySide(first: T, change: T, more: T, theater: @Composable (T) -> Unit): Pair<Bitmap, Bitmap> {
@@ -83,26 +75,6 @@ class HurryTest {
 
     /** Another moment of the change: far more than a few pixels apart. */
     private fun assertApart(pair: Pair<Bitmap, Bitmap>) = assertThat(differing(pair.first, pair.second)).isGreaterThan(5_000)
-
-    @Test
-    fun aCardThatJoinsTheStripWaitsForTheTurn() {
-        val pair = sideBySide(
-            Fixtures.flow(strip, listOf(0, 1, 2, 3), 1),
-            Fixtures.flow(strip, listOf(0, 1, 2, 3), 2),
-            Fixtures.flow(strip, listOf(0, 1, 2, 3, 4), 2),
-        ) { Fixtures.FlowTheaterOf(it) }
-        assertAlike(pair)
-    }
-
-    @Test
-    fun anotherSongHurriesTheTurn() {
-        val pair = sideBySide(
-            Fixtures.flow(strip, listOf(0, 1, 2, 3), 1),
-            Fixtures.flow(strip, listOf(0, 1, 2, 3), 2),
-            Fixtures.flow(strip, listOf(0, 1, 2, 3, 4), 3),
-        ) { Fixtures.FlowTheaterOf(it) }
-        assertApart(pair)
-    }
 
     @Test
     fun aBetterCoverWaitsForTheTrackChange() {

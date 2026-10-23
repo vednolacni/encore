@@ -21,7 +21,6 @@ import io.github.hazymorning.klangbild.config.MenuContext
 import io.github.hazymorning.klangbild.config.MenuEntry
 import io.github.hazymorning.klangbild.config.MenuRow
 import io.github.hazymorning.klangbild.config.MenuSection
-import io.github.hazymorning.klangbild.config.QueueDisplay
 import io.github.hazymorning.klangbild.domain.QuickAction
 import io.github.hazymorning.klangbild.config.QuickContext
 import io.github.hazymorning.klangbild.config.QuickItem
@@ -165,10 +164,10 @@ class LanguageTest {
         )
         val settings = listOf(Settings(), configured.copy(roomLights = RoomLights("light.left", null, null))).map { it.copy(quickActions = own) }
         val states = if (!buttons) listOf(emptyMap()) else ActionState.entries.map { st -> own.indices.associateWith { st } }
-        for (s in settings) for (music in listOf(true, false)) for (landscape in listOf(true, false)) for (actions in states) {
-            for (favorite in FavoriteState.entries + null) for (shuffle in listOf(true, false, null)) for (pending in QueueDisplay.entries + null) {
+        for (s in settings) for (music in listOf(true, false)) for (actions in states) {
+            for (favorite in FavoriteState.entries + null) for (shuffle in listOf(true, false, null)) {
                 for (lyrics in LyricsChoice.entries + null) for (code in if (party) listOf(true, false, null) else listOf(null)) {
-                    val rows = QuickMenu.rows(s, QuickContext(landscape, pending, music, favorite, shuffle, actions, lyrics, code), t)
+                    val rows = QuickMenu.rows(s, QuickContext(music, favorite, shuffle, actions, lyrics, code), t)
                     add(QuickState(rows, 0))
                 }
             }
@@ -275,13 +274,13 @@ class LanguageTest {
         for (attribute in Regex("""(?:placeholder|aria-label|title|alt)="([^"]*)"""").findAll(visible)) assertEnglish("page attribute", attribute.groupValues[1])
         assertEnglish("page", visible.replace(Regex("<[^>]*>"), " "))
         assertWithMessage("the page's language").that(html).contains("<html lang=\"en\">")
-        // The lists the page shows: states and weather in English words.
+        // The lists the page shows: states in English words.
         val found = SetupServer.parseSpeakers(
             """[{"entity_id":"media_player.a","state":"playing","attributes":{}},{"entity_id":"media_player.b","state":"buffering","attributes":{}},
-               {"entity_id":"light.a","state":"unavailable","attributes":{}},{"entity_id":"weather.a","state":"lightning-rainy","attributes":{}}]""",
+               {"entity_id":"light.a","state":"unavailable","attributes":{}}]""",
             en,
         ) as io.github.hazymorning.klangbild.setup.DiscoverResult.Ok
-        for (state in found.speakers.map { it.state } + found.lights.map { it.state } + found.weather.map { it.state }) assertEnglish("page list", state)
+        for (state in found.speakers.map { it.state } + found.lights.map { it.state }) assertEnglish("page list", state)
     }
 
     @Test

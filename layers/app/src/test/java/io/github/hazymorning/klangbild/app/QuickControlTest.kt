@@ -4,10 +4,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.google.common.truth.Truth.assertThat
 import io.github.hazymorning.klangbild.domain.Condition
 import io.github.hazymorning.klangbild.config.LyricsChoice
-import io.github.hazymorning.klangbild.config.MiniPlayer
 import io.github.hazymorning.klangbild.domain.QuickAction
 import io.github.hazymorning.klangbild.config.QuickItem
-import io.github.hazymorning.klangbild.config.QueueDisplay
 import io.github.hazymorning.klangbild.config.Settings
 import io.github.hazymorning.klangbild.domain.LinkState
 import io.github.hazymorning.klangbild.data.NowPlayingSource
@@ -21,8 +19,6 @@ import io.github.hazymorning.klangbild.domain.PlayerStatus
 import io.github.hazymorning.klangbild.domain.SongLyrics
 import io.github.hazymorning.klangbild.domain.Screen
 import io.github.hazymorning.klangbild.domain.TrackInfo
-import io.github.hazymorning.klangbild.landscape.Weather
-import io.github.hazymorning.klangbild.landscape.WeatherGlide
 import io.github.hazymorning.klangbild.text.AppLanguage
 import io.github.hazymorning.klangbild.text.TestTexts
 import io.github.hazymorning.klangbild.text.Texts
@@ -107,23 +103,14 @@ class QuickControlTest {
     /** The song's words in the text column, as the quick settings set them. */
     private var lyrics = false
 
-    /** The quick settings have been opened once (the stage's hint ends). */
-    private var quickSeen = false
-
-    /** How the queue shows, as the quick settings set it, and the choice still waiting as it was set. */
-    private var queue = QueueDisplay.OFF
-    private var pendingWhileSet: QueueDisplay? = null
-
-    /** How often the landscape was left, and called, and the settings menu opened. */
-    private var landscapeLeft = 0
-    private var landscapeCalled = 0
+    /** How often the settings menu opened. */
     private var menuOpened = 0
 
     private val host = object : ControllerHost {
         override val lock: Any = this
         override val scope = test
         override val now: () -> Long = { test.testScheduler.currentTime }
-        override val settings get() = Settings(quickActions = actions, lyrics = lyrics, quickSeen = quickSeen, queue = queue)
+        override val settings get() = Settings(quickActions = actions, lyrics = lyrics)
         override val ui: UiState get() = this@QuickControlTest.ui
         override val source: NowPlayingSource = this@QuickControlTest.source
         override val texts: Texts = TestTexts.english()
@@ -136,32 +123,24 @@ class QuickControlTest {
         }
         override fun applySettings(updated: Settings) {
             lyrics = updated.lyrics
-            quickSeen = updated.quickSeen
-            if (updated.queue != queue) pendingWhileSet = this@QuickControlTest.quick.pending
-            queue = updated.queue
         }
         override fun send(command: RemoteCommand) = Unit
         override fun requestSetup(show: Boolean) = Unit
-        override fun showLandscape() {
-            landscapeCalled++
-        }
-        override fun hideLandscape(): Boolean {
-            landscapeLeft++
-            return false
-        }
     }
 
     private val quick: QuickControl = QuickControl(host)
 
-    private fun rows() = quick.state(ui.screen, landscape = false)!!.rows
+    private fun rows() = quick.state(ui.screen)!!.rows
 
     private fun value(entity: String) = rows().first { it.item == QuickItem.ACTION && host.settings.quickActions[it.key.action].entity == entity }.value
 
     /** Opens the quick settings and goes right to the button for [entity]. */
     private fun choose(entity: String) {
         if (!quick.isOpen) quick.open(menuOpen = false)
+        // From the first entry on: entries that came since may stand before the cursor.
+        quick.move(-rows().size)
         repeat(rows().size) {
-            val s = quick.state(ui.screen, landscape = false)!!
+            val s = quick.state(ui.screen)!!
             val row = s.rows[s.cursor]
             if (row.item == QuickItem.ACTION && host.settings.quickActions[row.key.action].entity == entity) return
             quick.move(+1)
@@ -195,7 +174,7 @@ class QuickControlTest {
         ui = ui.copy(source = ui.source.copy(favorites = true))
         source.favoriteAnswer = Result.failure(IllegalStateException("No current item to add to favorites"))
         quick.open(menuOpen = false)
-        while (rows()[quick.state(ui.screen, landscape = false)!!.cursor].item != QuickItem.FAVORITE) quick.move(+1)
+        while (rows()[quick.state(ui.screen)!!.cursor].item != QuickItem.FAVORITE) quick.move(+1)
         fun favorite() = rows().first { it.item == QuickItem.FAVORITE }.value
         assertThat(favorite()).isEqualTo("Add")
         quick.change()
@@ -267,28 +246,28 @@ class QuickControlTest {
         val song = TrackInfo("Song", listOf("A"), durationMs = 200_000L)
         ui = ui.copy(screen = Screen.Stage(song, PlayerStatus.PLAYING, null))
         // Without Music Assistant no words can come: only the way into the settings stands there.
-        assertThat(quick.buttons(ui.screen, landscape = false).rows.map { it.item }).containsExactly(QuickItem.SETTINGS)
+        assertThat(quick.buttons(ui.screen).rows.map { it.item }).containsExactly(QuickItem.SETTINGS)
         ui = ui.copy(source = ui.source.copy(ma = MaLink.CONNECTED))
-        val resting = quick.buttons(ui.screen, landscape = false)
+        val resting = quick.buttons(ui.screen)
         assertThat(resting.rows.map { it.item }).containsExactly(QuickItem.LYRICS, QuickItem.SETTINGS).inOrder()
         assertThat(resting.cursor).isEqualTo(-1)
         // Down chooses among them, on the first; the row along the bottom edge stays away.
         quick.open(menuOpen = false, buttons = true)
         assertThat(quick.isCompact).isTrue()
-        assertThat(quick.state(ui.screen, landscape = false)!!.compact).isTrue()
-        assertThat(quick.buttons(ui.screen, landscape = false).cursor).isEqualTo(0)
+        assertThat(quick.state(ui.screen)!!.compact).isTrue()
+        assertThat(quick.buttons(ui.screen).cursor).isEqualTo(0)
         quick.change()
         assertThat(lyrics).isTrue()
         quick.move(+1)
         quick.move(+1)
-        assertThat(quick.buttons(ui.screen, landscape = false).cursor).isEqualTo(1)
+        assertThat(quick.buttons(ui.screen).cursor).isEqualTo(1)
         // Down again: the whole row, the cursor still on the settings.
         quick.expand()
-        val row = quick.state(ui.screen, landscape = false)!!
+        val row = quick.state(ui.screen)!!
         assertThat(row.compact).isFalse()
-        assertThat(row.rows.map { it.item }).contains(QuickItem.QUEUE)
+        assertThat(row.rows.map { it.item }).contains(QuickItem.ACTION)
         assertThat(row.rows[row.cursor].item).isEqualTo(QuickItem.SETTINGS)
-        assertThat(quick.buttons(ui.screen, landscape = false).cursor).isEqualTo(-1)
+        assertThat(quick.buttons(ui.screen).cursor).isEqualTo(-1)
         quick.change()
         assertThat(menuOpened).isEqualTo(1)
         assertThat(quick.isOpen).isFalse()
@@ -304,9 +283,9 @@ class QuickControlTest {
         ui = ui.copy(source = ui.source.copy(ma = MaLink.CONNECTED))
         fun lyricsRow() = rows().first { it.item == QuickItem.LYRICS }
         fun lyricsValue() = lyricsRow().value
-        assertThat(rows().map { it.item }.take(3)).containsExactly(QuickItem.QUEUE, QuickItem.LANDSCAPE, QuickItem.LYRICS).inOrder()
+        assertThat(rows().map { it.item }.first()).isEqualTo(QuickItem.LYRICS)
         assertThat(lyricsValue()).isEqualTo("Off")
-        quick.move(+2)
+        chooseEntry(QuickItem.LYRICS)
         quick.change()
         assertThat(lyrics).isTrue()
         // Not known yet: on. Known to have none: still on, said quietly. With words: on.
@@ -356,8 +335,10 @@ class QuickControlTest {
     /** Opens the quick settings and goes right to [item]. */
     private fun chooseEntry(item: QuickItem) {
         if (!quick.isOpen) quick.open(menuOpen = false)
+        // From the first entry on: entries that came since may stand before the cursor.
+        quick.move(-rows().size)
         repeat(rows().size) {
-            val s = quick.state(ui.screen, landscape = false)!!
+            val s = quick.state(ui.screen)!!
             if (s.rows[s.cursor].item == item) return
             quick.move(+1)
         }
@@ -381,8 +362,6 @@ class QuickControlTest {
         assertThat(partyValue()).isEqualTo("On")
         assertThat(quick.partyWanted(true)).isTrue()
         assertThat(quick.partyCode).isEqualTo("http://192.168.1.5:8095/?join=Q4WZ8TNP")
-        // It shows at once: the landscape makes way.
-        assertThat(landscapeLeft).isEqualTo(1)
         // The code expired: Music Assistant's new link comes with the next question.
         source.partyLink = "http://192.168.1.5:8095/?join=M2KD7RXA"
         test.advanceTimeBy(QuickControl.PARTY_URL_MS)
@@ -440,83 +419,5 @@ class QuickControlTest {
         quick.change()
         assertThat(quick.isOpen).isFalse()
         assertThat(menuOpened).isEqualTo(1)
-    }
-
-    @Test
-    fun `the queue steps on from how it shows, passes the list without Music Assistant, and is taken once the presses stop`() {
-        // Opened over the landscape, which they hold as it is.
-        ui = ui.copy(landscape = LandscapeUi(null, null, MiniPlayer.LEFT, WeatherGlide.still(Weather.FAIR)))
-        quick.open(menuOpen = false)
-        assertThat(quick.landscapeHeld).isTrue()
-        fun queueValue() = rows().first { it.item == QuickItem.QUEUE }.value
-        assertThat(queueValue()).isEqualTo("Off")
-        assertThat(quick.pending).isNull()
-        // Stepped round to how it was, nothing changes and the landscape stays.
-        quick.change()
-        quick.change()
-        assertThat(queueValue()).isEqualTo("Off")
-        assertThat(quick.pending).isEqualTo(QueueDisplay.OFF)
-        test.advanceTimeBy(QuickControl.SETTLE_MS + 50)
-        assertThat(quick.pending).isNull()
-        assertThat(landscapeLeft).isEqualTo(0)
-        assertThat(quick.landscapeHeld).isTrue()
-        // Without Music Assistant only the next track is known: the list is passed over.
-        quick.change()
-        assertThat(queueValue()).isEqualTo("Cover Flow")
-        assertThat(queue).isEqualTo(QueueDisplay.OFF)
-        // Waiting from the press on (the Queue value shimmers), and until the setting has it.
-        assertThat(quick.pending).isEqualTo(QueueDisplay.FLOW)
-        test.advanceTimeBy(QuickControl.SETTLE_MS + 50)
-        assertThat(queue).isEqualTo(QueueDisplay.FLOW)
-        assertThat(pendingWhileSet).isEqualTo(QueueDisplay.FLOW)
-        assertThat(quick.pending).isNull()
-        // Chosen, it leaves the landscape: the stage comes to show it.
-        assertThat(landscapeLeft).isEqualTo(1)
-        assertThat(quick.landscapeHeld).isFalse()
-        ui = ui.copy(landscape = null)
-        // With Music Assistant, the list comes between: steps that follow quickly show only the last.
-        ui = ui.copy(source = ui.source.copy(ma = MaLink.CONNECTED))
-        quick.change()
-        assertThat(queueValue()).isEqualTo("Off")
-        quick.change()
-        assertThat(queueValue()).isEqualTo("List")
-        assertThat(queue).isEqualTo(QueueDisplay.FLOW)
-        assertThat(quick.pending).isEqualTo(QueueDisplay.LIST)
-        quick.close()
-        assertThat(queue).isEqualTo(QueueDisplay.LIST)
-        assertThat(quick.pending).isNull()
-    }
-
-    @Test
-    fun `the landscape has an entry of its own, which turns it on and off at once`() {
-        quick.open(menuOpen = false)
-        fun landscapeValue(shows: Boolean) = quick.state(ui.screen, landscape = shows)!!.rows.first { it.item == QuickItem.LANDSCAPE }.value
-        assertThat(landscapeValue(false)).isEqualTo("Off")
-        assertThat(landscapeValue(true)).isEqualTo("On")
-        // The cursor on it: OK brings the landscape while it does not show, and leaves it while it does.
-        quick.state(ui.screen, landscape = false)
-        quick.move(+1)
-        quick.change()
-        assertThat(landscapeCalled).isEqualTo(1)
-        quick.state(ui.screen, landscape = true)
-        quick.change()
-        assertThat(landscapeLeft).isEqualTo(1)
-        assertThat(landscapeCalled).isEqualTo(1)
-        // A queue's choice still waiting is taken first, without leaving the landscape.
-        quick.state(ui.screen, landscape = false)
-        quick.move(-1)
-        quick.change()
-        quick.move(+1)
-        quick.change()
-        assertThat(queue).isEqualTo(QueueDisplay.FLOW)
-        assertThat(landscapeLeft).isEqualTo(1)
-        assertThat(landscapeCalled).isEqualTo(2)
-    }
-
-    @Test
-    fun `once opened, the quick settings are known and the stage no longer tells how`() {
-        assertThat(quickSeen).isFalse()
-        quick.open(menuOpen = false)
-        assertThat(quickSeen).isTrue()
     }
 }

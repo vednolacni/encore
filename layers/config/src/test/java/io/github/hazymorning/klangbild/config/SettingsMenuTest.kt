@@ -60,8 +60,6 @@ class SettingsMenuTest {
         assertThat(SettingsMenu.duration(10, en)).isEqualTo("Ten minutes")
         assertThat(SettingsMenu.duration(60, en)).isEqualTo("One hour")
         assertThat(SettingsMenu.duration(120, en)).isEqualTo("Two hours")
-        assertThat(SettingsMenu.delay(1, en)).isEqualTo("One second")
-        assertThat(SettingsMenu.delay(15, en)).isEqualTo("15 seconds")
     }
 
     @Test
@@ -125,42 +123,6 @@ class SettingsMenuTest {
     }
 
     @Test
-    fun `the landscape's delays step through the offered values, also from odd ones`() {
-        val s = Settings()
-        assertThat(SettingsMenu.value(MenuEntry.LANDSCAPE_PAUSE, s, MenuContext(), de)).isEqualTo("Drei Minuten")
-        assertThat(SettingsMenu.value(MenuEntry.LANDSCAPE_PLAYING, s, MenuContext(), de)).isEqualTo("Aus")
-        assertThat(SettingsMenu.step(MenuEntry.LANDSCAPE_PAUSE, s, +1)!!.landscapePauseSeconds).isEqualTo(300)
-        assertThat(SettingsMenu.step(MenuEntry.LANDSCAPE_PAUSE, s.copy(landscapePauseSeconds = 0), -1)!!.landscapePauseSeconds).isEqualTo(0)
-        assertThat(SettingsMenu.step(MenuEntry.LANDSCAPE_PAUSE, s.copy(landscapePauseSeconds = 600), +1, wrap = true)!!.landscapePauseSeconds).isEqualTo(0)
-        // Set by a link to 100 s: the nearest offered value is the start.
-        assertThat(SettingsMenu.step(MenuEntry.LANDSCAPE_PAUSE, s.copy(landscapePauseSeconds = 100), +1)!!.landscapePauseSeconds).isEqualTo(180)
-        assertThat(SettingsMenu.step(MenuEntry.LANDSCAPE_PLAYING, s, +1)!!.landscapePlayingSeconds).isEqualTo(60)
-        assertThat(SettingsMenu.delay(15, de)).isEqualTo("15 Sekunden")
-        assertThat(SettingsMenu.delay(60, de)).isEqualTo("Eine Minute")
-        assertThat(SettingsMenu.delay(5, de)).isEqualTo("Fünf Sekunden")
-        assertThat(SettingsMenu.step(MenuEntry.MINI_PLAYER, s, +1)!!.miniPlayer).isEqualTo(MiniPlayer.RIGHT)
-        assertThat(SettingsMenu.step(MenuEntry.MINI_PLAYER, s, -1)!!.miniPlayer).isEqualTo(MiniPlayer.OFF)
-        assertThat(SettingsMenu.value(MenuEntry.MINI_PLAYER, s, MenuContext(), de)).isEqualTo("Unten links")
-    }
-
-    @Test
-    fun `the layout is classic or a player's, which needs the queue off`() {
-        val s = Settings()
-        assertThat(SettingsMenu.value(MenuEntry.LAYOUT, s, MenuContext(), de)).isEqualTo("Klassisch")
-        val player = SettingsMenu.step(MenuEntry.LAYOUT, s, +1)!!
-        assertThat(player.layout).isEqualTo(StageLayout.PLAYER)
-        assertThat(player.player).isTrue()
-        assertThat(SettingsMenu.value(MenuEntry.LAYOUT, player, MenuContext(), de)).isEqualTo("Player")
-        assertThat(SettingsMenu.step(MenuEntry.LAYOUT, player, +1)!!.layout).isEqualTo(StageLayout.PLAYER)
-        assertThat(SettingsMenu.step(MenuEntry.LAYOUT, player, +1, wrap = true)!!.layout).isEqualTo(StageLayout.CLASSIC)
-        // Cover Flow and the list keep their own grids, and the line says so.
-        val flow = player.copy(queue = QueueDisplay.FLOW)
-        assertThat(flow.player).isFalse()
-        assertThat(SettingsMenu.description(MenuEntry.LAYOUT, flow, MenuContext(), de))
-            .isNotEqualTo(SettingsMenu.description(MenuEntry.LAYOUT, player, MenuContext(), de))
-    }
-
-    @Test
     fun `sections stay together in menu order`() {
         val sections = SettingsMenu.entries.map { it.section }
         assertThat(sections).isInOrder(compareBy<MenuSection> { it.ordinal })
@@ -169,7 +131,7 @@ class SettingsMenuTest {
     @Test
     fun `the first level shows the groups, each saying what is in it, and every setting is in one`() {
         val groups = SettingsMenu.groups(de)
-        assertThat(groups.map { it.label }).containsExactly("Bild", "Informationen", "Licht", "Landschaft", "Fernbedienung", "Timer", "System").inOrder()
+        assertThat(groups.map { it.label }).containsExactly("Bild", "Informationen", "Licht", "Fernbedienung", "Timer", "System").inOrder()
         for (g in groups) {
             assertThat(g.entry).isNull()
             assertThat(g.description).endsWith(".")
@@ -177,7 +139,7 @@ class SettingsMenuTest {
         }
         assertThat(SettingsMenu.sections.flatMap { SettingsMenu.entriesOf(it) }).containsExactlyElementsIn(SettingsMenu.entries).inOrder()
         assertThat(SettingsMenu.entriesOf(MenuSection.PICTURE)).containsExactly(
-            MenuEntry.QUEUE, MenuEntry.LAYOUT, MenuEntry.APPEARANCE, MenuEntry.BACKGROUND, MenuEntry.INTENSITY, MenuEntry.MOTION,
+            MenuEntry.APPEARANCE, MenuEntry.BACKGROUND, MenuEntry.INTENSITY, MenuEntry.MOTION,
         ).inOrder()
         assertThat(SettingsMenu.entriesOf(MenuSection.SYSTEM)).containsExactly(
             MenuEntry.CONNECTION, MenuEntry.MUSIC_ASSISTANT, MenuEntry.PLAY_HERE, MenuEntry.LANGUAGE,

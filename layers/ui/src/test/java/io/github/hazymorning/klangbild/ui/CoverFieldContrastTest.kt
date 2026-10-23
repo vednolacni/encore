@@ -13,7 +13,6 @@ import io.github.hazymorning.klangbild.color.Appearance
 import io.github.hazymorning.klangbild.color.contrastRatio
 import io.github.hazymorning.klangbild.color.relativeLuminance
 import io.github.hazymorning.klangbild.render.ArtworkScene
-import io.github.hazymorning.klangbild.render.FlowGeometry
 import io.github.hazymorning.klangbild.render.ScreenSpec
 import io.github.hazymorning.klangbild.ui.stage.FieldLayer
 import io.github.hazymorning.klangbild.ui.stage.FieldTime
@@ -25,9 +24,9 @@ import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
 
 /**
- * On the cover colors the quietest text keeps 4.5:1 against the lightest pixel the
- * rendered field shows anywhere in the text column, wherever its moving layers stand; in Cover
- * Flow wherever the column can stand.
+ * On the cover colors the quietest text keeps 4.5:1 against the lightest pixel the rendered field
+ * shows anywhere text stands, wherever its moving layers stand: in the text column, and across
+ * the screen under the cover, where the song's title, the bar and the buttons stand.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -44,14 +43,8 @@ class CoverFieldContrastTest {
     @Test
     fun theQuietestTextKeepsItsContrastOnThePaleField() = check(Appearance.LIGHT)
 
-    @Test
-    fun inCoverFlowTheQuietestTextKeepsItsContrastWhereverTheColumnStands() = check(Appearance.DARK, flow = true)
-
-    @Test
-    fun inCoverFlowOnPaleColorsTheQuietestTextKeepsItsContrastWhereverTheColumnStands() = check(Appearance.LIGHT, flow = true)
-
-    private fun check(appearance: Appearance, flow: Boolean = false) {
-        val first = Fixtures.scene(Fixtures.tracks.first(), mdpi, appearance = appearance, flow = flow, coverField = true)
+    private fun check(appearance: Appearance) {
+        val first = Fixtures.scene(Fixtures.tracks.first(), mdpi, appearance = appearance, coverField = true)
         var scene by mutableStateOf(first)
         var at by mutableStateOf(0.0)
         compose.setContent {
@@ -60,7 +53,7 @@ class CoverFieldContrastTest {
             }
         }
         for (track in Fixtures.tracks) {
-            scene = Fixtures.scene(track, mdpi, appearance, flow = flow, coverField = true)
+            scene = Fixtures.scene(track, mdpi, appearance, coverField = true)
             for (t in listOf(0.0, 47.0, 133.0, 260.0)) {
                 at = t
                 val worst = worstBehindText(scene, darkText = appearance == Appearance.LIGHT)
@@ -71,20 +64,16 @@ class CoverFieldContrastTest {
         }
     }
 
-    /** The field's pixel in the text column that the quietest text stands out from least. */
+    /** The field's pixel where text stands that the quietest text stands out from least. */
     private fun worstBehindText(scene: ArtworkScene, darkText: Boolean): Int {
         compose.waitForIdle()
         val bmp = compose.onRoot().captureToImage().asAndroidBitmap()
         val l = scene.layout
-        // In Cover Flow the column moves left when cards are missing.
-        val reach = if (l.flow) FlowGeometry(l).leftmostColumn else 0f
-        val x0 = (l.columnLeft + reach).toInt()
-        val x1 = (l.columnLeft + l.columnWidth).toInt()
-        val y0 = l.statusTop.toInt() - 4
-        val y1 = l.footerBottom.toInt() + 4
+        val column = (l.columnLeft.toInt() until (l.columnLeft + l.columnWidth).toInt()) to (l.statusTop.toInt() - 4 until l.footerBottom.toInt() + 4)
+        val across = (l.barLeft.toInt() until (l.barLeft + l.barWidth).toInt()) to (l.captionTop.toInt() - 4 until l.buttonsBottom.toInt())
         var worst = if (darkText) -1 else 0xFF000000.toInt()
         var worstY = if (darkText) 2f else -1f
-        for (y in y0 until y1) for (x in x0 until x1) {
+        for ((xs, ys) in listOf(column, across)) for (y in ys) for (x in xs) {
             val p = bmp.getPixel(x, y)
             val lum = relativeLuminance(p)
             if (if (darkText) lum < worstY else lum > worstY) {

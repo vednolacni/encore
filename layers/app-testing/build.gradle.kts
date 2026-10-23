@@ -13,7 +13,6 @@ dependencies {
     implementation(projects.config)
     implementation(projects.domain)
     implementation(projects.domainTesting)
-    implementation(projects.landscape)
     implementation(projects.render)
     implementation(projects.text)
     implementation(projects.textTesting)

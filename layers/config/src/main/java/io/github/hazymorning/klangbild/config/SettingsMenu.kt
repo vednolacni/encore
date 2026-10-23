@@ -17,7 +17,6 @@ enum class MenuSection(@StringRes val title: Int, @StringRes val about: Int) {
     PICTURE(R.string.section_picture, R.string.about_section_picture),
     INFO(R.string.section_info, R.string.about_section_info),
     LIGHTS(R.string.section_lights, R.string.about_section_lights),
-    LANDSCAPE(R.string.section_landscape, R.string.about_section_landscape),
     REMOTE(R.string.section_remote, R.string.about_section_remote),
     TIMER(R.string.section_timer, R.string.about_section_timer),
     SYSTEM(R.string.section_system, R.string.about_section_system),
@@ -25,8 +24,6 @@ enum class MenuSection(@StringRes val title: Int, @StringRes val about: Int) {
 
 /** One setting, in its group's order; [label] is 0 for a line named after what it connects to. */
 enum class MenuEntry(val section: MenuSection, @StringRes val label: Int) {
-    QUEUE(MenuSection.PICTURE, R.string.entry_queue),
-    LAYOUT(MenuSection.PICTURE, R.string.entry_layout),
     APPEARANCE(MenuSection.PICTURE, R.string.entry_appearance),
     BACKGROUND(MenuSection.PICTURE, R.string.entry_background),
     INTENSITY(MenuSection.PICTURE, R.string.entry_intensity),
@@ -41,9 +38,6 @@ enum class MenuEntry(val section: MenuSection, @StringRes val label: Int) {
     LYRICS(MenuSection.INFO, R.string.entry_lyrics),
     BRIGHTNESS(MenuSection.LIGHTS, R.string.entry_brightness),
     OFF_LIGHTS(MenuSection.LIGHTS, R.string.entry_off_lights),
-    LANDSCAPE_PAUSE(MenuSection.LANDSCAPE, R.string.entry_landscape_pause),
-    LANDSCAPE_PLAYING(MenuSection.LANDSCAPE, R.string.entry_landscape_playing),
-    MINI_PLAYER(MenuSection.LANDSCAPE, R.string.entry_mini_player),
     REMOTE(MenuSection.REMOTE, R.string.entry_remote),
     UP_DOWN(MenuSection.REMOTE, R.string.entry_up_down),
     SPOKEN(MenuSection.REMOTE, R.string.entry_spoken),
@@ -149,8 +143,6 @@ object SettingsMenu {
     }
 
     fun value(e: MenuEntry, s: Settings, ctx: MenuContext, t: Texts): String = when (e) {
-        MenuEntry.QUEUE -> queueValue(s.queue, t)
-        MenuEntry.LAYOUT -> t[if (s.layout == StageLayout.PLAYER) R.string.layout_player else R.string.layout_classic]
         MenuEntry.CLOCK -> onOff(s.showClock, t)
         MenuEntry.PROGRESS_BAR -> onOff(s.showProgressBar, t)
         MenuEntry.NEXT -> onOff(s.showNext, t)
@@ -201,17 +193,8 @@ object SettingsMenu {
                 Intensity.OFF -> R.string.off
             },
         ]
-        MenuEntry.LANDSCAPE_PAUSE -> delay(s.landscapePauseSeconds, t)
-        MenuEntry.LANDSCAPE_PLAYING -> delay(s.landscapePlayingSeconds, t)
-        MenuEntry.MINI_PLAYER -> t[
-            when (s.miniPlayer) {
-                MiniPlayer.LEFT -> R.string.mini_player_left
-                MiniPlayer.RIGHT -> R.string.mini_player_right
-                MiniPlayer.OFF -> R.string.off
-            },
-        ]
         MenuEntry.REMOTE -> onOff(s.remoteControl, t)
-        MenuEntry.UP_DOWN -> t[if (s.volumeKeys) R.string.up_down_volume else R.string.up_down_landscape]
+        MenuEntry.UP_DOWN -> t[if (s.volumeKeys) R.string.up_down_volume else R.string.up_down_buttons]
         MenuEntry.SPOKEN -> t[if (s.spokenSkip) R.string.spoken_jump else R.string.spoken_change]
         MenuEntry.SLEEP_TIMER -> sleepValue(ctx.sleep, ctx.kind, t)
         MenuEntry.SLEEP_AFTER -> duration(s.sleepAfterMinutes, t)
@@ -238,20 +221,6 @@ object SettingsMenu {
     }
 
     fun description(e: MenuEntry, s: Settings, ctx: MenuContext, t: Texts): String = when (e) {
-        MenuEntry.QUEUE -> t[
-            when (s.queue) {
-                QueueDisplay.OFF -> R.string.about_queue_off
-                QueueDisplay.LIST -> if (s.hasMusicAssistant) R.string.about_queue_list else R.string.about_queue_list_set_up
-                QueueDisplay.FLOW -> R.string.about_queue_flow
-            },
-        ]
-        MenuEntry.LAYOUT -> t[
-            when {
-                s.layout == StageLayout.CLASSIC -> R.string.about_layout_classic
-                s.queue == QueueDisplay.OFF -> R.string.about_layout_player
-                else -> R.string.about_layout_player_queue
-            },
-        ]
         MenuEntry.APPEARANCE -> t[
             when (s.appearance) {
                 AppearanceMode.AUTO -> R.string.about_appearance_auto
@@ -315,23 +284,8 @@ object SettingsMenu {
                 else -> R.string.about_lights_switch_on
             },
         ]
-        MenuEntry.LANDSCAPE_PAUSE -> t[if (s.landscapePauseSeconds == 0) R.string.about_landscape_pause_off else R.string.about_landscape_pause]
-        MenuEntry.LANDSCAPE_PLAYING -> t[
-            when {
-                s.landscapePlayingSeconds != 0 -> R.string.about_landscape_playing
-                s.volumeKeys -> R.string.about_landscape_playing_off_volume
-                else -> R.string.about_landscape_playing_off
-            },
-        ]
-        MenuEntry.MINI_PLAYER -> t[
-            when (s.miniPlayer) {
-                MiniPlayer.LEFT -> R.string.about_mini_player_left
-                MiniPlayer.RIGHT -> R.string.about_mini_player_right
-                MiniPlayer.OFF -> R.string.about_mini_player_off
-            },
-        ]
         MenuEntry.REMOTE -> t[if (s.remoteControl) R.string.about_remote_on else R.string.about_remote_off]
-        MenuEntry.UP_DOWN -> t[if (s.volumeKeys) R.string.about_up_down_volume else R.string.about_up_down_landscape]
+        MenuEntry.UP_DOWN -> t[if (s.volumeKeys) R.string.about_up_down_volume else R.string.about_up_down_buttons]
         MenuEntry.SPOKEN -> t[if (s.spokenSkip) R.string.about_spoken_jump else R.string.about_spoken_change]
         MenuEntry.SLEEP_TIMER -> when {
             ctx.sleep == SleepChoice.OFF -> t[R.string.about_sleep_timer_off]
@@ -397,8 +351,6 @@ object SettingsMenu {
      * lines that need something set up first ([opensSetup]: OK sets it up).
      */
     fun step(e: MenuEntry, s: Settings, direction: Int, wrap: Boolean = false): Settings? = when (e) {
-        MenuEntry.QUEUE -> s.copy(queue = move(QUEUE_ORDER, s.queue, direction, wrap))
-        MenuEntry.LAYOUT -> s.copy(layout = move(LAYOUT_ORDER, s.layout, direction, wrap))
         MenuEntry.CLOCK -> s.copy(showClock = !s.showClock)
         MenuEntry.PROGRESS_BAR -> s.copy(showProgressBar = !s.showProgressBar)
         MenuEntry.NEXT -> s.copy(showNext = !s.showNext)
@@ -414,9 +366,6 @@ object SettingsMenu {
         MenuEntry.OFF_LIGHTS -> if (s.roomLights.isSet) s.copy(lightsOnlyOn = !s.lightsOnlyOn) else null
         MenuEntry.APPEARANCE -> s.copy(appearance = move(APPEARANCE_ORDER, s.appearance, direction, wrap))
         MenuEntry.INTENSITY -> s.copy(intensity = move(INTENSITY_ORDER, s.intensity, direction, wrap))
-        MenuEntry.LANDSCAPE_PAUSE -> s.copy(landscapePauseSeconds = move(PAUSE_DELAYS, nearest(PAUSE_DELAYS, s.landscapePauseSeconds), direction, wrap))
-        MenuEntry.LANDSCAPE_PLAYING -> s.copy(landscapePlayingSeconds = move(PLAYING_DELAYS, nearest(PLAYING_DELAYS, s.landscapePlayingSeconds), direction, wrap))
-        MenuEntry.MINI_PLAYER -> s.copy(miniPlayer = move(MINI_ORDER, s.miniPlayer, direction, wrap))
         MenuEntry.REMOTE -> s.copy(remoteControl = !s.remoteControl)
         MenuEntry.UP_DOWN -> s.copy(volumeKeys = !s.volumeKeys)
         MenuEntry.SPOKEN -> s.copy(spokenSkip = !s.spokenSkip)
@@ -430,17 +379,6 @@ object SettingsMenu {
     /** The language after one step from [language] ([direction] -1 or +1; [wrap] goes round). */
     fun stepLanguage(language: AppLanguage, direction: Int, wrap: Boolean): AppLanguage = move(LANGUAGE_ORDER, language, direction, wrap)
 
-    /** The delays offered for the landscape (s): when paused, and while music plays; 0 is off. */
-    val PAUSE_DELAYS = listOf(0, 5, 15, 30, 60, 180, 300, 600)
-    val PLAYING_DELAYS = listOf(0, 60, 120, 300, 600, 900, 1800)
-
-    /** "Off", "Five seconds", "15 seconds", "Three minutes" and so on. */
-    fun delay(seconds: Int, t: Texts): String = when {
-        seconds <= 0 -> t[R.string.off]
-        seconds < 60 -> t.plural(R.plurals.seconds, seconds, t.countWord(seconds))
-        else -> duration(seconds / 60, t)
-    }
-
     /** "Ten minutes", "One hour", "90 minutes", "Two hours": numbers up to twelve in words. */
     fun duration(minutes: Int, t: Texts): String {
         val hours = minutes / 60
@@ -453,9 +391,6 @@ object SettingsMenu {
 
     /** The largest number written in words. */
     private const val MAX_WORD_COUNT = 12
-
-    /** The offered value nearest to [v] (which may have been set from outside). */
-    private fun nearest(choices: List<Int>, v: Int): Int = choices.minByOrNull { kotlin.math.abs(it - v) } ?: choices.first()
 
     /** "Off", "30 minutes", "1 hour", "End of chapter", "End of episode" and so on. */
     fun sleepValue(choice: SleepChoice, kind: MediaKind?, t: Texts): String = when (choice) {
@@ -480,15 +415,6 @@ object SettingsMenu {
         else -> R.string.sleep_end_track
     }
 
-    /** How the queue shows, in a word: Off, List, Cover Flow. */
-    fun queueValue(queue: QueueDisplay, t: Texts): String = t[
-        when (queue) {
-            QueueDisplay.OFF -> R.string.off
-            QueueDisplay.LIST -> R.string.queue_list
-            QueueDisplay.FLOW -> R.string.queue_flow
-        },
-    ]
-
     /** A language as the menu names it: English and German in their own words, the system's in the language shown. */
     fun languageValue(language: AppLanguage, t: Texts): String = t[
         when (language) {
@@ -499,14 +425,11 @@ object SettingsMenu {
     ]
 
     /** From quiet to present: left means less, right means more. */
-    val QUEUE_ORDER = listOf(QueueDisplay.OFF, QueueDisplay.LIST, QueueDisplay.FLOW)
-    private val LAYOUT_ORDER = listOf(StageLayout.CLASSIC, StageLayout.PLAYER)
     private val VOLUME_ORDER = listOf(VolumeDisplay.OFF, VolumeDisplay.ON_CHANGE, VolumeDisplay.ALWAYS)
     private val INTENSITY_ORDER = listOf(Intensity.OFF, Intensity.SUBTLE, Intensity.NORMAL, Intensity.STRONG)
     private val APPEARANCE_ORDER = listOf(AppearanceMode.DARK, AppearanceMode.AUTO, AppearanceMode.LIGHT)
     private val MOTION_ORDER = listOf(MotionLevel.OFF, MotionLevel.GENTLE, MotionLevel.MEDIUM, MotionLevel.LIVELY)
     private val BRIGHTNESS_ORDER = RoomLightBrightness.entries
-    private val MINI_ORDER = listOf(MiniPlayer.OFF, MiniPlayer.LEFT, MiniPlayer.RIGHT)
     private val LANGUAGE_ORDER = listOf(AppLanguage.SYSTEM, AppLanguage.ENGLISH, AppLanguage.GERMAN)
 
     private fun <T> move(order: List<T>, current: T, direction: Int, wrap: Boolean): T {

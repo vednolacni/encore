@@ -15,7 +15,6 @@ import io.github.hazymorning.klangbild.config.QuickKey
 import io.github.hazymorning.klangbild.config.RoomLightBrightness
 import io.github.hazymorning.klangbild.config.FavoriteState
 import io.github.hazymorning.klangbild.config.RoomLights
-import io.github.hazymorning.klangbild.config.MiniPlayer
 import io.github.hazymorning.klangbild.config.QuickContext
 import io.github.hazymorning.klangbild.config.QuickItem
 import io.github.hazymorning.klangbild.config.QuickMenu
@@ -25,8 +24,6 @@ import io.github.hazymorning.klangbild.domain.SourceState
 import io.github.hazymorning.klangbild.domain.PlayerStatus
 import io.github.hazymorning.klangbild.domain.Screen
 import io.github.hazymorning.klangbild.ui.stage.Stage
-import io.github.hazymorning.klangbild.ui.landscape.LandscapeScreen
-import io.github.hazymorning.klangbild.landscape.LandscapeClock
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -36,7 +33,7 @@ import java.util.TimeZone
 import io.github.hazymorning.klangbild.Pictures
 import org.junit.experimental.categories.Category
 
-/** The quick settings along the bottom edge: over the stage on black and on paper, and over the landscape. */
+/** The quick settings along the bottom edge: over the stage on black and on paper. */
 @Category(Pictures::class)
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -63,7 +60,7 @@ class QuickBarTest {
             Fixtures.Still {
                 Box(Modifier.fillMaxSize()) {
                     Stage(Fixtures.model(track, next = Fixtures.spiegel))
-                    QuickBar(state(QuickItem.QUEUE, playing), Appearance.DARK)
+                    QuickBar(state(QuickItem.LIGHTS, playing), Appearance.DARK)
                 }
             }
         }
@@ -84,12 +81,12 @@ class QuickBarTest {
                 }
             }
         }
-        // Without lights and without favorites (no Music Assistant): two entries.
+        // Without lights and without favorites (no Music Assistant): the way into the settings alone.
         captureRoboImage("build/screenshots/quick/stage_few.png") {
             Fixtures.Still {
                 Box(Modifier.fillMaxSize()) {
                     Stage(Fixtures.model(track, next = Fixtures.spiegel))
-                    QuickBar(state(QuickItem.QUEUE, QuickContext(music = true), Settings()), Appearance.DARK)
+                    QuickBar(state(QuickItem.SETTINGS, QuickContext(music = true), Settings()), Appearance.DARK)
                 }
             }
         }
@@ -120,30 +117,9 @@ class QuickBarTest {
                 }
             }
         }
-        shot("buttons_start", QuickKey(QuickItem.QUEUE))
+        shot("buttons_start", QuickKey(QuickItem.FAVORITE))
         shot("buttons_first", QuickKey(QuickItem.ACTION, 0))
         shot("buttons_end", QuickKey(QuickItem.ACTION, 2))
         shot("buttons_end_en", QuickKey(QuickItem.ACTION, 2), io.github.hazymorning.klangbild.text.TestTexts.english())
-    }
-
-    @Test
-    fun overTheLandscape() {
-        val t = java.time.ZonedDateTime.of(2026, 10, 10, 13, 0, 0, 0, Fixtures.zone).toInstant().toEpochMilli()
-        val track = Fixtures.track(SyntheticCover.BAUHAUS)
-        val ui = UiState(
-            screen = Screen.Stage(track, PlayerStatus.PLAYING, null),
-            stage = Fixtures.stage(track),
-            source = SourceState(LinkState.CONNECTED, place = 52.52 to 13.40),
-            landscape = Fixtures.landscape(track, PlayerStatus.PLAYING, MiniPlayer.LEFT, "partlycloudy"),
-        )
-        val clock = LandscapeClock(now = { t })
-        captureRoboImage("build/screenshots/quick/landscape.png") {
-            Fixtures.Still {
-                Box(Modifier.fillMaxSize()) {
-                    LandscapeScreen(ui, ui.landscape!!, clock, positionOf = { 60_000L }, now = { t }, modifier = Modifier.fillMaxSize())
-                    QuickBar(state(QuickItem.QUEUE, playing.copy(landscape = true)), Appearance.DARK)
-                }
-            }
-        }
     }
 }

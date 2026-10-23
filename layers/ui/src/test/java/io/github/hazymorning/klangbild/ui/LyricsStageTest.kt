@@ -17,7 +17,6 @@ import io.github.hazymorning.klangbild.config.Settings
 import io.github.hazymorning.klangbild.domain.TrackInfo
 import io.github.hazymorning.klangbild.text.TestTexts
 import io.github.hazymorning.klangbild.text.Texts
-import io.github.hazymorning.klangbild.ui.flow.FlowStage
 import io.github.hazymorning.klangbild.ui.stage.Stage
 import io.github.hazymorning.klangbild.ui.stage.StageModel
 import org.junit.Test
@@ -29,9 +28,8 @@ import io.github.hazymorning.klangbild.domain.Catalog
 import org.junit.experimental.categories.Category
 
 /**
- * The song's words in the text column: beside a single cover and in Cover Flow, on both walls
- * and the cover's colors, German and English; a break in the singing, the first line waiting,
- * the bar for a moment, long lines, other scripts, a lost link, and the quick settings' Lyrics
+ * The song's words in the text column: on both walls and the cover's colors, German and
+ * English; a break in the singing, the first line waiting, long lines, other scripts, a lost link, and the quick settings' Lyrics
  * entry over them.
  */
 @Category(Pictures::class)
@@ -47,15 +45,6 @@ class LyricsStageTest {
     private fun shot(name: String, model: StageModel, t: Texts = Fixtures.texts) =
         captureRoboImage("build/screenshots/lyrics/$name.png") { Fixtures.Still(t) { Stage(model) } }
 
-    /** Cover Flow with two cards on each side, the song in the middle. */
-    private fun flowShot(name: String, track: TrackInfo, words: io.github.hazymorning.klangbild.domain.Lyrics, appearance: Appearance, t: Texts = Fixtures.texts, coverField: Boolean = false) {
-        val tracks = listOf(SyntheticCover.TERRACOTTA, SyntheticCover.MOSS).map(Fixtures::track) + track +
-            listOf(SyntheticCover.WHITE_SPACE, SyntheticCover.BAUHAUS).map(Fixtures::track)
-        val scenes = Fixtures.flowScenes(tracks, appearance, coverField = coverField)
-        val model = Fixtures.lyricsModel(track, words, appearance = appearance, flow = true, scene = scenes[2], t = t, group = if (t === en) "Living room" else "Wohnzimmer")
-        captureRoboImage("build/screenshots/lyrics/$name.png") { Fixtures.Still(t) { FlowStage(model, Fixtures.restingCards(scenes, 2)) } }
-    }
-
     @Test fun dark() = shot("single_dark", Fixtures.lyricsModel(neon, neonLyrics))
 
     @Test fun light() = shot("single_light", Fixtures.lyricsModel(neon, neonLyrics, appearance = Appearance.LIGHT))
@@ -68,24 +57,11 @@ class LyricsStageTest {
 
     @Test fun coverColorsPaper() = shot("single_cover_colors_paper", Fixtures.lyricsModel(neon, neonLyrics, appearance = Appearance.LIGHT, coverField = true))
 
-    @Test fun flowDark() = flowShot("flow_dark", neon, neonLyrics, Appearance.DARK)
-
-    @Test fun flowLight() = flowShot("flow_light", neon, neonLyrics, Appearance.LIGHT)
-
-    @Test fun flowDarkEnglish() = flowShot("flow_dark_en", Fixtures.night, nightLyrics, Appearance.DARK, en)
-
-    @Test fun flowLightEnglish() = flowShot("flow_light_en", Fixtures.night, nightLyrics, Appearance.LIGHT, en)
-
-    @Test fun flowCoverColors() = flowShot("flow_cover_colors", neon, neonLyrics, Appearance.DARK, coverField = true)
-
     /** A break in the singing (the guitar takes over): the line sung last stays in the middle, unlit. */
     @Test fun rest() = shot("rest", Fixtures.lyricsModel(neon, neonLyrics, position = { 36_000L }))
 
     /** Before the first line: it waits in the middle, unlit. */
     @Test fun intro() = shot("intro", Fixtures.lyricsModel(neon, neonLyrics, position = { 5_000L }))
-
-    /** A key brings the progress bar for a moment, above the song; the words make room for it. */
-    @Test fun barForAMoment() = shot("bar", Fixtures.lyricsModel(neon, neonLyrics, peek = true))
 
     /** The link is lost: the notice stands where the bar would. */
     @Test fun linkDown() = shot("link_down", Fixtures.lyricsModel(neon, neonLyrics, linkDown = true))
@@ -128,7 +104,7 @@ class LyricsStageTest {
             Fixtures.Still {
                 Box(Modifier.fillMaxSize()) {
                     Stage(noWords)
-                    QuickBar(quick(QuickItem.QUEUE, LyricsChoice.NONE, Fixtures.texts), Appearance.DARK)
+                    QuickBar(quick(QuickItem.SETTINGS, LyricsChoice.NONE, Fixtures.texts), Appearance.DARK)
                 }
             }
         }

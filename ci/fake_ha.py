@@ -2,11 +2,11 @@
 """A small stand-in for Home Assistant for the emulator smoke test (standard library only).
 
 Speaks just enough of Home Assistant's documented APIs for Klangbild:
-  WebSocket: auth, subscribe_trigger with a state trigger (the speaker, sun.sun, the weather
-    and, in a second subscription, the other speakers of its group), unsubscribe_events,
-    call_service (music_assistant.get_queue and the media keys), get_config (where it stands:
-    Berlin, for the landscape's sun and moon), config/entity_registry/list_for_display (the
-    speakers that belong to Music Assistant) and ping.
+  WebSocket: auth, subscribe_trigger with a state trigger (the speaker, sun.sun and, in a
+    second subscription, the other speakers of its group), unsubscribe_events, call_service
+    (music_assistant.get_queue and the media keys), get_config (its units),
+    config/entity_registry/list_for_display (the speakers that belong to Music Assistant) and
+    ping.
   REST: GET /api/states/<entity_id> with the access token.
 It serves the cover as a PNG. 40 seconds after the app subscribed the next track starts, so
 the smoke test also runs through a track change. The emulator reaches the host at 10.0.2.2.

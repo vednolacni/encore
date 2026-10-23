@@ -61,8 +61,6 @@ class MenuControlTest {
         override fun requestSetup(show: Boolean) {
             setup++
         }
-        override fun showLandscape() = Unit
-        override fun hideLandscape() = false
     }
 
     private val menu = MenuControl(host, SleepControl(host))
@@ -103,7 +101,7 @@ class MenuControlTest {
     fun `the menu opens on its groups, OK opens one, back goes up a level and then out`() {
         menu.open()
         assertThat(state().section).isNull()
-        assertThat(state().rows.map { it.label }).containsExactly("Picture", "Information", "Lights", "Landscape", "Remote", "Timer", "System").inOrder()
+        assertThat(state().rows.map { it.label }).containsExactly("Picture", "Information", "Lights", "Remote", "Timer", "System").inOrder()
         // Left on a group does nothing; right or OK opens it on its first line.
         menu.move(+1)
         menu.change(-1, wrap = false)

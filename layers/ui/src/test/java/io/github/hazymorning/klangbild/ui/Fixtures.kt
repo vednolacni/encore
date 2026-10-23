@@ -3,23 +3,18 @@ package io.github.hazymorning.klangbild.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import io.github.hazymorning.klangbild.app.AppFixtures
-import io.github.hazymorning.klangbild.app.FlowData
-import io.github.hazymorning.klangbild.app.QueueList
 import io.github.hazymorning.klangbild.app.StageData
-import io.github.hazymorning.klangbild.ui.stage.QueueModel
 import io.github.hazymorning.klangbild.color.Appearance
 import io.github.hazymorning.klangbild.domain.PlayerStatus
 import io.github.hazymorning.klangbild.domain.TrackInfo
 import io.github.hazymorning.klangbild.domain.TrackText
 import io.github.hazymorning.klangbild.render.ArtworkScene
 import io.github.hazymorning.klangbild.render.ScreenSpec
-import io.github.hazymorning.klangbild.ui.flow.CardMotion
 import io.github.hazymorning.klangbild.ui.stage.StageModel
 import io.github.hazymorning.klangbild.ui.stage.StageTexts
 import io.github.hazymorning.klangbild.ui.stage.StageTheater
 import io.github.hazymorning.klangbild.ui.stage.StatusLine
 import io.github.hazymorning.klangbild.text.LocalTexts
-import io.github.hazymorning.klangbild.text.TestTexts
 import io.github.hazymorning.klangbild.text.Texts
 
 /**
@@ -27,10 +22,6 @@ import io.github.hazymorning.klangbild.text.Texts
  * theaters that move them.
  */
 object Fixtures : AppFixtures() {
-    /** The cards of [scenes] at rest, the one at [current] in the middle. */
-    fun restingCards(scenes: List<ArtworkScene>, current: Int) =
-        scenes.mapIndexed { i, sc -> CardMotion(i.toLong(), sc.card!!, (i - current).toFloat(), (i - current).toFloat()) }
-
     fun model(
         track: TrackInfo,
         next: TrackInfo? = null,
@@ -73,7 +64,6 @@ object Fixtures : AppFixtures() {
         position: Long,
         pace: String?,
         appearance: Appearance = Appearance.DARK,
-        flow: Boolean = false,
         next: TrackInfo? = null,
         coverField: Boolean = false,
         group: String? = "Wohnzimmer",
@@ -84,7 +74,7 @@ object Fixtures : AppFixtures() {
         }
         val lead = StageTexts.lead(PlayerStatus.PLAYING, muted = false, volumeFlash = false, volume = null, group = group, volumeAlways = false, t = t, pace = pace)
         return StageModel(
-            scene = scene(track, appearance = appearance, flow = flow, coverField = coverField),
+            scene = scene(track, appearance = appearance, coverField = coverField),
             text = TrackText.from(track, t[io.github.hazymorning.klangbild.text.R.string.artists_others]),
             status = PlayerStatus.PLAYING,
             durationMs = chapter?.let { it.endMs - it.startMs } ?: track.durationMs,
@@ -98,8 +88,8 @@ object Fixtures : AppFixtures() {
     }
 
     /**
-     * The stage with the song's [lyrics] at [position] (ms), as the root builds it: the song itself
-     * where "Up next" stands, the progress bar only for a moment after a key ([peek]).
+     * The stage with the song's [lyrics] at [position] (ms), as the root builds it: the song under
+     * the cover, the progress bar across the screen unless it is hidden ([progress]).
      */
     fun lyricsModel(
         track: TrackInfo,
@@ -107,14 +97,13 @@ object Fixtures : AppFixtures() {
         position: () -> Long? = { 84_000L },
         status: PlayerStatus = PlayerStatus.PLAYING,
         appearance: Appearance = Appearance.DARK,
-        flow: Boolean = false,
         coverField: Boolean = false,
         screen: ScreenSpec = ScreenSpec.TV_1080,
-        scene: ArtworkScene = scene(track, screen, appearance, flow, coverField),
+        scene: ArtworkScene = scene(track, screen, appearance, coverField),
         clock: String? = "21:47",
         group: String? = "Wohnzimmer",
         t: Texts = texts,
-        peek: Boolean = false,
+        progress: Boolean = true,
         linkDown: Boolean = false,
     ): StageModel {
         val lead = StageTexts.lead(status, muted = false, volumeFlash = false, volume = null, group = group, volumeAlways = false, t = t)
@@ -125,48 +114,12 @@ object Fixtures : AppFixtures() {
             durationMs = track.durationMs,
             positionMs = position,
             year = track.year,
-            progress = peek,
+            progress = progress,
             line = StageTexts.line(linkDown, track, t),
             next = StageTexts.next(track, t),
             nextTitle = StageTexts.nextTitle(track, t),
             statusLine = StatusLine(lead, clock),
             lyrics = lyrics,
-        )
-    }
-
-    /**
-     * The stage with the queue as a list ([list]), as the root builds it: the song at the top, "Up
-     * next" saying how much follows, the rows under it.
-     */
-    fun queueModel(
-        track: TrackInfo,
-        list: QueueList,
-        status: PlayerStatus = PlayerStatus.PLAYING,
-        appearance: Appearance = Appearance.DARK,
-        coverField: Boolean = false,
-        screen: ScreenSpec = ScreenSpec.TV_1080,
-        scene: ArtworkScene = scene(track, screen, appearance, coverField = coverField),
-        clock: String? = "21:47",
-        group: String? = "Wohnzimmer",
-        t: Texts = texts,
-        progress: Boolean = true,
-        positionMs: Long? = track.durationMs?.let { it / 3 },
-        album: Boolean = true,
-    ): StageModel {
-        val lead = StageTexts.lead(status, muted = false, volumeFlash = false, volume = null, group = group, volumeAlways = false, t = t)
-        val text = TrackText.from(track, t[io.github.hazymorning.klangbild.text.R.string.artists_others])
-        return StageModel(
-            scene = scene,
-            text = if (album) text else text.copy(album = null),
-            status = status,
-            durationMs = track.durationMs,
-            positionMs = { positionMs },
-            year = track.year.takeIf { album },
-            progress = progress,
-            line = StageTexts.line(false, track, t),
-            next = StageTexts.queue(list.upNext.count, list.upNext.durationMs, t).orEmpty(),
-            statusLine = StatusLine(lead, clock),
-            queue = QueueModel.of(list, t),
         )
     }
 
@@ -178,35 +131,6 @@ object Fixtures : AppFixtures() {
     @Composable
     fun Still(t: Texts, content: @Composable () -> Unit) {
         CompositionLocalProvider(LocalStill provides true, LocalTexts provides t, content = content)
-    }
-
-    /** The animated cover flow for one strip; what comes next is the card to the right. */
-    @Composable
-    fun FlowTheaterOf(flow: FlowData, status: PlayerStatus = PlayerStatus.PLAYING, partyCode: String? = null) {
-        val lead = StageTexts.lead(status, false, volumeFlash = false, volume = null, group = "Wohnzimmer + 5", volumeAlways = false, t = texts)
-        val next = flow.cards.getOrNull(flow.current + 1)?.track
-        io.github.hazymorning.klangbild.ui.flow.FlowTheater(
-            flow = flow,
-            status = status,
-            modelFor = { s -> model(s.track, next = next, status = status, scene = s.scene, lead = lead) },
-            partyCode = partyCode,
-        )
-    }
-
-    /** The animated stage with the queue's list where [StageData.queue] has one, in [t]'s words. */
-    @Composable
-    fun QueueTheater(stage: StageData, status: PlayerStatus = PlayerStatus.PLAYING, t: Texts = TestTexts.english(), next: TrackInfo? = null, progress: Boolean = true) {
-        CompositionLocalProvider(LocalTexts provides t) {
-            StageTheater(
-                stage = stage,
-                status = status,
-                modelFor = { s ->
-                    val list = s.queue
-                    if (list != null) queueModel(s.track, list, status = status, scene = s.scene, group = "Living room", t = t, progress = progress)
-                    else model(s.track, next = next, status = status, scene = s.scene, t = t, group = "Living room")
-                },
-            )
-        }
     }
 
     /** The animated stage (pause dimming, buffering pulse) for one stage, frozen in time. */

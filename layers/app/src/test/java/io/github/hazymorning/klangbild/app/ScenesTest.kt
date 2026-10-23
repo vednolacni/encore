@@ -27,9 +27,9 @@ import java.io.IOException
 import java.util.concurrent.atomic.AtomicInteger
 
 /**
- * A switch to Cover Flow and straight back lets go of the scene still being made for Cover Flow:
- * the single cover's own scene starts at once instead of waiting for one nobody will show (until
- * 2026.10 it waited for that build to end, at worst for the whole wait on its cover).
+ * A switch to another screen and straight back lets go of the scene still being made for the
+ * other one: the scene for the screen shown starts at once instead of waiting for one nobody will
+ * show, at worst for the whole wait on its cover.
  */
 @RunWith(AndroidJUnit4::class)
 @GraphicsMode(GraphicsMode.Mode.NATIVE)
@@ -54,13 +54,13 @@ class ScenesTest {
             val screen = ScreenSpec(960, 540, 1f)
             val track = TrackInfo("Song", listOf("A"), artworkUrl = "http://192.168.1.5:8095/cover.jpg")
             val look = Look(Appearance.DARK, 1f)
-            scenes.frame = Frame(screen, flow = true)
+            scenes.frame = Frame(ScreenSpec(1920, 1080, 2f))
             scenes.prepare(track, look)
             assertThat(scenes.pending(track)).isTrue()
-            // Cover Flow's scene is really waiting for its cover.
+            // The other screen's scene is really waiting for its cover.
             withTimeout(5_000) { while (asked.get() == 0) delay(5) }
-            // Back to the single cover while Cover Flow's scene still waits for its cover.
-            scenes.frame = Frame(screen, flow = false)
+            // Back to this screen while the other one's scene still waits for its cover.
+            scenes.frame = Frame(screen)
             assertThat(scenes.pending(track)).isFalse()
             val made = CompletableDeferred<ArtworkScene>()
             val start = System.nanoTime()

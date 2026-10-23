@@ -20,8 +20,8 @@ import kotlin.math.roundToInt
  * Plays one change of a theater: [t] runs from 0 to 1 in [totalMs]. If another song is waiting
  * before the end ([newer] returns), the rest of the change hurries (at most [Motion.HURRY_MS])
  * once [onHurry] has learned where it stood. The change still lands (nothing jumps), and the
- * next one follows at once. Anything else that comes meanwhile (a card that joins the strip, a
- * better cover) waits for the change to land.
+ * next one follows at once. Anything else that comes meanwhile (a better cover) waits for the
+ * change to land.
  */
 suspend fun playChange(
     t: Animatable<Float, AnimationVector1D>,
@@ -81,12 +81,6 @@ class RisingText(private val t: Animatable<Float, AnimationVector1D>) {
 
     /** How far [line] has risen: 1 in its place. */
     fun level(line: TextLine): Float = rise?.level(held ?: t.value, line) ?: 1f
-
-    /**
-     * How far [line] has risen as its change runs, whether it is held or not: the queue's rows
-     * come the whole way, since they are the queue and not the song skipped past.
-     */
-    fun unheld(line: TextLine): Float = rise?.level(t.value, line) ?: 1f
 
     /** How far [line] of the text that leaves had risen when the change began. */
     fun leaving(line: TextLine): Float = left?.level(line) ?: 1f

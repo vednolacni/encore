@@ -56,20 +56,21 @@ class DesignRulesTest {
     }
 
     @Test
-    fun `a tight halo, the same on every side, gone before the text column`() {
+    fun `a tight halo, the same on every side the screen's edge leaves it, gone before the text column`() {
         val field = glow(thumb(0xFFF2EEE6.toInt()))
         val r = layout.artRect
         val near = luminance(field.at(r.right + 2f, r.centerY))
         assertThat(near).isIn(Range.closed(WallGlow.EDGE_LUMINANCE * 0.8f, WallGlow.EDGE_LUMINANCE * 1.1f))
-        // the same at 12 dp on all four sides (no side cut short by the screen's edge)
+        // the same at 12 dp on the sides and below; above, the black band along the screen's edge
+        // is near, and the light only fades sooner there
         val sides = listOf(
             field.at(r.right + 12f, r.centerY),
             field.at(r.left - 12f, r.centerY),
-            field.at(r.centerX, r.top - 12f),
             field.at(r.centerX, r.bottom + 12f),
         ).map { luminance(it) }
         for (s in sides) assertThat(s).isWithin(near * 0.12f).of(sides.first())
         assertThat(sides.first()).isLessThan(near)
+        assertThat(luminance(field.at(r.centerX, r.top - 12f))).isAtMost(sides.first() * 1.12f)
         // the text column stands on black
         assertThat(field.at(layout.columnLeft + 1f, r.centerY) and 0xFFFFFF).isEqualTo(0)
         // dark behind the artwork, lit just under its edge (no dark rim around it)
@@ -144,18 +145,20 @@ class DesignRulesTest {
 
     @Test
     fun `the artwork is the heaviest element and sets the height`() {
-        // two thirds of the screen's height
-        assertThat(layout.art).isWithin(0.01f).of(368f)
+        // more than half of the screen's height
+        assertThat(layout.art).isWithin(0.01f).of(290f)
         // the text block takes clearly less height than the artwork
         assertThat(BLOCK_SHARE).isAtMost(0.65f)
         // the quiet lines frame the column within the artwork's straight edge, a corner radius in
         assertThat(layout.statusTop).isWithin(0.01f).of(layout.artRect.top + layout.radius)
         assertThat(layout.footerBottom).isWithin(0.01f).of(layout.artRect.bottom - layout.radius)
-        // the group stands exactly in the screen's middle: as much room above as below …
-        assertThat(layout.artRect.centerY).isWithin(0.01f).of(screen.heightDp / 2f)
-        // … and as much left of the artwork as right of the column; 64 dp between
+        // as much room above the artwork as below the buttons …
+        assertThat(screen.heightDp - layout.buttonsBottom).isWithin(0.01f).of(layout.artRect.top)
+        // … and as much left of the artwork as right of the column and the bar; 64 dp between
         assertThat(layout.artRect.left).isWithin(0.01f).of(88f)
         assertThat(screen.widthDp - (layout.columnLeft + layout.columnWidth)).isWithin(0.01f).of(layout.artRect.left)
+        assertThat(layout.barLeft).isWithin(0.01f).of(layout.artRect.left)
+        assertThat(screen.widthDp - (layout.barLeft + layout.barWidth)).isWithin(0.01f).of(layout.artRect.left)
         assertThat(layout.columnLeft - layout.artRect.right).isWithin(0.01f).of(64f)
     }
 

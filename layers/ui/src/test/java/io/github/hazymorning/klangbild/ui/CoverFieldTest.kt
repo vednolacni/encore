@@ -6,7 +6,6 @@ import com.github.takahirom.roborazzi.captureRoboImage
 import io.github.hazymorning.klangbild.art.SyntheticCover
 import io.github.hazymorning.klangbild.color.Appearance
 import io.github.hazymorning.klangbild.domain.TrackInfo
-import io.github.hazymorning.klangbild.ui.flow.FlowStage
 import io.github.hazymorning.klangbild.ui.stage.FieldTime
 import io.github.hazymorning.klangbild.ui.stage.LocalFieldTime
 import io.github.hazymorning.klangbild.ui.stage.Stage
@@ -63,27 +62,5 @@ class CoverFieldTest {
     @Test
     fun moving() {
         for (i in 0..7) stage("motion_%02d".format(i), SyntheticCover.NIGHT_DRIVE, at = i * 12.0)
-    }
-
-    @Test
-    fun flow() {
-        val strip: List<TrackInfo> = listOf(
-            Fixtures.track(SyntheticCover.TERRACOTTA),
-            Fixtures.radio,
-            Fixtures.track(SyntheticCover.NIGHT_DRIVE),
-            Fixtures.track(SyntheticCover.WHITE_SPACE),
-            Fixtures.track(SyntheticCover.BAUHAUS),
-        )
-        for (appearance in Appearance.entries) {
-            val scenes = Fixtures.flowScenes(strip, appearance, coverField = true)
-            captureRoboImage("build/screenshots/cover_field/flow_${appearance.name.lowercase()}.png") {
-                Fixtures.Still {
-                    FlowStage(
-                        Fixtures.model(strip[2], next = strip[3], group = "Wohnzimmer + 5", scene = scenes[2], appearance = appearance),
-                        Fixtures.restingCards(scenes, 2),
-                    )
-                }
-            }
-        }
     }
 }

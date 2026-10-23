@@ -41,11 +41,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         val intensity = stringPreferencesKey("light_level")
         val volumeKeys = booleanPreferencesKey("volume_keys")
         val appearance = stringPreferencesKey("appearance")
-        val queue = stringPreferencesKey("queue")
-        val layout = stringPreferencesKey("stage_layout")
 
-        /** The view of versions before the queue's setting: SINGLE or FLOW. Read once, then removed. */
-        val formerView = stringPreferencesKey("view")
         val lyrics = booleanPreferencesKey("lyrics")
         val maUrl = stringPreferencesKey("ma_url")
         val maToken = stringPreferencesKey("ma_token")
@@ -58,12 +54,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         val roomLightBrightness = stringPreferencesKey("bar_level")
         val lightsOnlyOn = booleanPreferencesKey("lights_only_on")
         val spokenSkip = booleanPreferencesKey("spoken_skip")
-        val landscapePause = intPreferencesKey("vista_pause_s")
-        val landscapePlaying = intPreferencesKey("vista_playing_s")
-        val miniPlayer = stringPreferencesKey("mini_player")
-        val weather = stringPreferencesKey("weather_entity")
         val quickActions = stringPreferencesKey("quick_actions")
-        val quickSeen = booleanPreferencesKey("quick_seen")
         val ownValues = stringPreferencesKey("own_values")
         val showValues = booleanPreferencesKey("show_values")
     }
@@ -77,23 +68,20 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
 
     /**
      * Brings what an earlier version stored up to date, in the same step that reads it: tokens
-     * stored before secrets were sealed are sealed, and the view becomes how the queue shows.
+     * stored before secrets were sealed are sealed.
      */
     suspend fun migrate() {
         context.dataStore.edit { migrate(it) }
     }
 
     /**
-     * [p] brought up to date in place, as [migrate] does on disk. The view only moves its own
-     * key: rewriting every setting would open the sealed tokens, and one that cannot be opened at
-     * that moment would be lost.
+     * [p] brought up to date in place, as [migrate] does on disk. Only a store that still holds a
+     * plain token is written anew: rewriting every setting would open the sealed tokens, and one
+     * that cannot be opened at that moment would be lost.
      */
     internal fun migrate(p: MutablePreferences) {
         val plain = listOf(Keys.token, Keys.refreshToken, Keys.maToken).any { k -> p[k]?.let(secrets::isPlain) == true }
         if (plain) write(p, read(p))
-        val view = p[Keys.formerView] ?: return
-        if (Keys.queue !in p) p[Keys.queue] = queueOfView(view).name
-        p.remove(Keys.formerView)
     }
 
     /** The settings as [p] stores them; what an earlier version stored is read as it is meant now. */
@@ -117,8 +105,6 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
             intensity = enumOr(p[Keys.intensity], defaults.intensity),
             volumeKeys = p[Keys.volumeKeys] ?: defaults.volumeKeys,
             appearance = enumOr(p[Keys.appearance], defaults.appearance),
-            queue = p[Keys.queue]?.let { enumOr(it, defaults.queue) } ?: queueOfView(p[Keys.formerView]),
-            layout = enumOr(p[Keys.layout], defaults.layout),
             lyrics = p[Keys.lyrics] ?: defaults.lyrics,
             maUrl = p[Keys.maUrl],
             maToken = p[Keys.maToken]?.let(secrets::open),
@@ -129,13 +115,8 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
             roomLightBrightness = p[Keys.roomLightBrightness]?.let { RoomLightBrightness.named(it) } ?: defaults.roomLightBrightness,
             lightsOnlyOn = p[Keys.lightsOnlyOn] ?: defaults.lightsOnlyOn,
             spokenSkip = p[Keys.spokenSkip] ?: defaults.spokenSkip,
-            landscapePauseSeconds = p[Keys.landscapePause] ?: defaults.landscapePauseSeconds,
-            landscapePlayingSeconds = p[Keys.landscapePlaying] ?: defaults.landscapePlayingSeconds,
-            miniPlayer = enumOr(p[Keys.miniPlayer], defaults.miniPlayer),
-            weatherEntity = p[Keys.weather],
             quickActions = QuickActions.decode(p[Keys.quickActions]),
             ownValues = OwnValues.decode(p[Keys.ownValues]),
-            quickSeen = p[Keys.quickSeen] ?: defaults.quickSeen,
             showValues = p[Keys.showValues] ?: defaults.showValues,
         )
 
@@ -162,9 +143,6 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         p[Keys.intensity] = s.intensity.name
         p[Keys.volumeKeys] = s.volumeKeys
         p[Keys.appearance] = s.appearance.name
-        p[Keys.queue] = s.queue.name
-        p[Keys.layout] = s.layout.name
-        p.remove(Keys.formerView)
         p[Keys.lyrics] = s.lyrics
         putOrRemove(Keys.maUrl, s.maUrl)
         putSecret(Keys.maToken, s.maToken)
@@ -177,21 +155,10 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         p[Keys.roomLightBrightness] = s.roomLightBrightness.name
         p[Keys.lightsOnlyOn] = s.lightsOnlyOn
         p[Keys.spokenSkip] = s.spokenSkip
-        p[Keys.landscapePause] = s.landscapePauseSeconds
-        p[Keys.landscapePlaying] = s.landscapePlayingSeconds
-        p[Keys.miniPlayer] = s.miniPlayer.name
-        putOrRemove(Keys.weather, s.weatherEntity)
         putOrRemove(Keys.quickActions, s.quickActions.takeIf { it.isNotEmpty() }?.let(QuickActions::encode))
         putOrRemove(Keys.ownValues, s.ownValues.takeIf { it.isNotEmpty() }?.let(OwnValues::encode))
-        p[Keys.quickSeen] = s.quickSeen
         p[Keys.showValues] = s.showValues
     }
-
-    /**
-     * How the queue shows for the view an earlier version stored: Cover Flow stays Cover Flow, and
-     * the single cover, which had no list beside it, is the queue off.
-     */
-    private fun queueOfView(view: String?): QueueDisplay = if (view == "FLOW") QueueDisplay.FLOW else defaults.queue
 
     /** The constant named [name], or [default] for none or a name this version does not know. */
     private inline fun <reified E : Enum<E>> enumOr(name: String?, default: E): E =
