@@ -27,7 +27,7 @@ OUT = os.path.join(ROOT, "docs", "screenshots")
 FONTS = os.path.join(ROOT, "layers", "ui", "src", "main", "res", "font")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_launcher_assets import logo  # noqa: E402  (the same logo as on the TV's home screen)
+from make_launcher_assets import logo, whole  # noqa: E402  (the same logo as on the TV's home screen)
 
 
 # Color ---------------------------------------------------------------------------------------
@@ -280,8 +280,7 @@ def dark_room(W, H, tv, colors, strength, albedo=(122, 118, 114), ambient=0.008,
 
 
 def logo_tile(side, ss=4):
-    """The whole logo, the TV on its square of sand, with round corners: its colors and its
-    coverage."""
+    """The icon, the TV on its square of sand, with round corners: its colors and its coverage."""
     tile = Image.new("L", (side * ss, side * ss), 0)
     ImageDraw.Draw(tile).rounded_rectangle([0, 0, side * ss - 1, side * ss - 1], radius=int(side * 0.24 * ss), fill=255)
     a = np.asarray(tile.resize((side, side), Image.LANCZOS), dtype=np.float64) / 255.0
@@ -400,34 +399,18 @@ def download_buttons():
     download_button(light=True)
 
 
-def wide_logo(light=False, h=240):
-    """The README's header: the logo on its tile beside the name, on transparency, as wide as the two
-    need. The name is espresso for a light page and pale for a dark one; the tile stays the same
-    on both. The README shows it 420 px wide."""
-    side = h
-    mark, a = logo_tile(side)
-    size = 0.40 * h / 0.70                       # the name's cap height 40% of the tile's
-    name, cap_row = text_mask("Encore", "jost.ttf", size, 600, tracking=-0.01, kern=True)
-    gap = int(round(h * 0.20))
-    w = side + gap + ink_width(name) + int(round(h * 0.04))
-    rgb = np.zeros((h, w, 3))
-    alpha = np.zeros((h, w))
-    rgb[:, :side] = mark
-    alpha[:, :side] = a[..., 0]
-    # The cap height centered on the tile, the ink starting a gap to its right.
-    y = int(round(h / 2 - 0.70 * size / 2)) - cap_row
-    cols = np.nonzero(name.max(axis=0) > 0.02)[0]
-    x = side + gap - int(cols[0])
-    ink = np.array((43, 33, 26) if light else (251, 248, 243), dtype=np.float64)
-    region = alpha[y:y + name.shape[0], x:x + name.shape[1]]
-    cover = name[: region.shape[0], : region.shape[1]]
-    rgb[y:y + cover.shape[0], x:x + cover.shape[1]] = ink
-    region[:] = np.maximum(region, cover)
-    rgba = np.dstack([np.clip(rgb, 0, 255), alpha * 255]).round().astype(np.uint8)
+def wide_logo(light=False, h=200):
+    """The README's header: the owner's whole logo, the TV beside the name, on transparency, with a
+    little room around it. For a light page as drawn, for a dark one with the TV and the name in
+    linen and the bars in espresso. The README shows it 420 px wide."""
+    art = whole(h, dark=not light)
+    pad = int(round(h * 0.06))
+    img = Image.new("RGBA", (art.width + 2 * pad, art.height + 2 * pad), (0, 0, 0, 0))
+    img.alpha_composite(art, (pad, pad))
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, "logo-wide.png" if light else "logo-wide-dark.png")
-    Image.fromarray(rgba, "RGBA").save(path, optimize=True)
-    print(path, os.path.getsize(path) // 1024, "KB", f"{w}x{h}")
+    img.save(path, optimize=True)
+    print(path, os.path.getsize(path) // 1024, "KB", f"{img.width}x{img.height}")
 
 
 def wide_logos():
