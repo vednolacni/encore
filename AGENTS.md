@@ -19,27 +19,33 @@ Android TV app, sideload only, built for a 4K Android TV device with a weak GPU 
 OLED TV. The UI speaks English (default) and German (`values-de`); code, comments, the README,
 the release notes, CI and every other document are English. The owner is vednolacni.
 
-The README stays short (about 700 words, the longer parts folded away in `<details>`) and is
-written like everything else (see the writing rules): what Encore is and what it does upfront
-with the first picture and the download button, the day and night picture, then a note
-(GitHub's `> [!NOTE]`, its first sentence in bold on a line of its own) saying it is based on
-Klangbild by hazymorning with a link and a thanks, then under "More" one line to click for each
-part: Compatibility (the badge's `#devices` anchor stands before it), Setting it up (its three
-steps folded inside it), TV remote, Sendspin, Contributing, Data privacy and License. GitHub draws
-its alert boxes only outside folds, so a note in a fold is a plain quote with its word in bold on
-a line of its own (Important). The README's pictures are mockups in `docs/screenshots/`: the
-app's own screens (`ReadmeShotsTest`, with the colors the lights behind the TV would show) set in
-a room by `tools/make_readme_pictures.py`, made again when the look changes, and the download
-button, which downloads the newest APK at once (`releases/latest/download/encore.apk`, so every
-release names its APK `encore.apk`). The first picture and the button come in a light and a dark
-version, switched by the reader's theme (`<picture>` with `prefers-color-scheme`). No mockup
-carries text of its own. Issues are for bugs: the issue form (`bug_report.yml`) says so kindly
-and sends ideas and questions to the Discussions.
+The README follows the layout of the owner's other projects (SeerrHA's README is the model) and
+is written like everything else (see the writing rules). A centered header holds the wide logo
+(`logo-wide.png`, or `logo-wide-dark.png` for a dark page), a tagline as `###`, reference-style
+shields badges (Android TV 9+ linking to `#devices`, Home Assistant, Music Assistant, License), a
+line on what it works with, the download button, a row of links to the sections (`&middot;`
+between them) and the first picture. Then a rule (`---`), three short paragraphs on what Encore
+does and where it comes from, `## Features` (one emoji opening each line), `## Requirements` (a
+table, Requirement and Why), `## Install` (numbered steps, the note on the speaker listed twice as
+GitHub's `> [!IMPORTANT]`, the optional automation), Day and night with its picture, Devices,
+Remote, Sendspin, Privacy, Support, Credits (Klangbild by hazymorning, then the owner's own line
+"Developed with the assistance of AI.") and License. No folds. The README's pictures are mockups
+in `docs/screenshots/`: the app's own screens (`ReadmeShotsTest`, with the colors the lights behind
+the TV would show) set in a room by `tools/make_readme_pictures.py`, made again when the look
+changes, and the download button, which downloads the newest APK at once
+(`releases/latest/download/encore.apk`, so every release names its APK `encore.apk`). The logo,
+the first picture and the button come in a light and a dark version, switched by the reader's
+theme (`<picture>` with `prefers-color-scheme`). No mockup carries text of its own. Issues are for
+bugs: the issue form (`bug_report.yml`) says so kindly and sends ideas and questions to the
+Discussions.
 
-The logo is `tools/logo.svg` (a cover's rounded square with a warm light in it and a progress bar
-part of the way along under it, peach on a deep plum), drawn from it by
-`tools/make_launcher_assets.py` for the banner, the icons and the button, never scaled from a
-bitmap. Release notes are easy to scan and in everyday words: a small heading for each kind of
+The logo is `tools/logo.svg`, the owner's own design, kept as given: an espresso brown TV
+(#2B211A) with an antenna and five linen bars on its screen (#F7F2EA; three standing, two leaning
+together), beside the name. The icons show the TV alone on a square of warm sand (#EDE5D9), the
+banner the whole logo on that sand, and a dark page the TV and the name in linen with espresso bars.
+`tools/make_launcher_assets.py` draws them from the SVG with CairoSVG (and through it
+`tools/make_readme_pictures.py` the README's wide logo and the button), never scaled from a bitmap;
+the notification icon (`ic_notification.xml`) is the same TV as a vector. Release notes are easy to scan and in everyday words: a small heading for each kind of
 change there is (`### New`, `### Better`, `### Bug fixes`), under it a few short points a user
 understands at once, nothing technical, never speaking to the reader and only claiming what is
 sure to work. `docs/` holds only the notes of the releases on GitHub and the README's pictures:
@@ -60,11 +66,12 @@ effort goes into the app, not into documents.
   next song"), no stiff or odd wording that only machine-written text has. In the README that
   style tells a first-time visitor that nobody cared, and the whole project loses its first
   impression. Read every sentence aloud before it goes in.
-- The README never speaks in the first person (no I, me, my, we, our). It talks about Encore and
-  to the reader. A text asked to be short says
+- The README speaks in the first person only where it says where Encore comes from, in a
+  sentence or two as the owner's other READMEs do; everywhere else it talks about Encore and to
+  the reader. A text asked to be short says
   each point once in the fewest natural words, with no reasons, contrasts or examples nobody asked
   for; count the words before it goes in.
-- No emoji, no em dashes, no dashes as punctuation, no exclamation marks, no bold for emphasis,
+- No emoji (one opening each line of the README's Features is the exception), no em dashes, no dashes as punctuation, no exclamation marks, no bold for emphasis,
   no marketing words (seamless, effortless, elevate, delightful, immersive, robust, powerful,
   crafted), no filler, no poetic fragments. Commit subjects under 60 characters, PR descriptions
   under 300.
@@ -74,7 +81,8 @@ effort goes into the app, not into documents.
 - No AI branding anywhere, Claude's or any other tool's: no footers, no Co-Authored-By, no session
   links, no "Generated with" or "Generated by" lines in commits, PRs, comments, issues or releases
   (`.claude/settings.json` turns Claude Code's own attribution off). A footer a tool adds by itself
-  is edited out right away. Commits carry the owner's name (vednolacni). A cloud session's own
+  is edited out right away. The README's credits end with the owner's own line, "Developed with
+  the assistance of AI.", which names no tool. Commits carry the owner's name (vednolacni). A cloud session's own
   git identity is Claude's, so the session start hook (`.claude/hooks/session-start.sh`) sets the
   owner's there.
 - No generated names in public either. A cloud session's own branch (`ccr-…`, `claude/…`) is never
@@ -98,8 +106,8 @@ effort goes into the app, not into documents.
 python3 ci/compare-pictures.py before/ layers/ui/build/screenshots/ changes/   # what looks different (Pillow)
 ./gradlew :androidApp:lintRelease                              # Android Lint over the app and every layer: every warning fails
 ./gradlew :androidApp:assembleRelease                          # R8-minified APK, signed with the debug key
-python3 tools/make_launcher_assets.py                          # re-render banner + icons from the logo (Pillow)
-python3 tools/make_readme_pictures.py                          # README mockups and download button (Pillow, numpy; names like download_buttons make only those)
+python3 tools/make_launcher_assets.py                          # re-render banner + icons from the logo (Pillow, numpy, CairoSVG)
+python3 tools/make_readme_pictures.py                          # README mockups, download button, wide logo (Pillow, numpy; names like wide_logos make only those)
 ./gradlew :speaker:testDebugUnitTest --tests '*EndToEndTest*' -Pencore.sendspin=$PWD/venv/bin/python   # the speaker against aiosendspin 10.2.0 (python3 -m venv venv && venv/bin/pip install 'aiosendspin[server]==10.2.0')
 ```
 

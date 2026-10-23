@@ -27,7 +27,7 @@ OUT = os.path.join(ROOT, "docs", "screenshots")
 FONTS = os.path.join(ROOT, "layers", "ui", "src", "main", "res", "font")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_launcher_assets import NAVY, logo  # noqa: E402  (the same mark as on the TV's home screen)
+from make_launcher_assets import logo, whole  # noqa: E402  (the same logo as on the TV's home screen)
 
 
 # Color ---------------------------------------------------------------------------------------
@@ -280,8 +280,7 @@ def dark_room(W, H, tv, colors, strength, albedo=(122, 118, 114), ambient=0.008,
 
 
 def logo_tile(side, ss=4):
-    """The logo on its own plum tile with round corners, as on the TV's home screen: its colors and
-    its coverage, for light backgrounds, where the bare logo would fade."""
+    """The icon, the TV on its square of sand, with round corners: its colors and its coverage."""
     tile = Image.new("L", (side * ss, side * ss), 0)
     ImageDraw.Draw(tile).rounded_rectangle([0, 0, side * ss - 1, side * ss - 1], radius=int(side * 0.24 * ss), fill=255)
     a = np.asarray(tile.resize((side, side), Image.LANCZOS), dtype=np.float64) / 255.0
@@ -352,11 +351,10 @@ def ink_width(mask):
 
 
 def download_button(scale=4, light=False):
-    """The README's download button, built like a store badge: the logo, then "Download for" over
-    "Android TV", the same space on every side, flat plum with a hairline edge. The [light] one, for
-    light pages, is pale with plum words, and the logo sits on its own plum tile as on the TV's home
-    screen. Its width follows what it holds; the README shows it 236 px
-    wide."""
+    """The README's download button, built like a store badge: the logo on its tile, then "Download
+    for" over "Android TV", the same space on every side, with a hairline edge. For a dark page it is
+    espresso with pale words, the [light] one chalk with brown words. Its width follows what it
+    holds; the README shows it 236 px wide. Its colors are the logo's own family."""
     h = 64 * scale
     side = int(round(h * 0.60))                  # the logo
     pad = (h - side) // 2                        # the same space left of it as above and below
@@ -375,22 +373,20 @@ def download_button(scale=4, light=False):
     edge = np.asarray(edge.resize((w, h), Image.LANCZOS), dtype=np.float64) / 255.0
     img = np.empty((h, w, 3))
     if light:
-        img[:] = np.array([250, 244, 240], dtype=np.float64)
-        img = img * (1 - edge[..., None] * 0.16) + np.array(NAVY) * edge[..., None] * 0.16
-        mark, a = logo_tile(side)
+        img[:] = np.array([253, 251, 247], dtype=np.float64)          # chalk
+        img = img * (1 - edge[..., None]) + np.array([222, 211, 196]) * edge[..., None]
     else:
-        img[:] = np.array(NAVY, dtype=np.float64)
-        img = img * (1 - edge[..., None] * 0.22) + np.array([200, 160, 170]) * edge[..., None] * 0.22
-        mark = np.asarray(logo(side, background=None), dtype=np.float64)
-        a = mark[..., 3:4] / 255.0
+        img[:] = np.array([43, 33, 26], dtype=np.float64)             # espresso
+        img = img * (1 - edge[..., None]) + np.array([74, 58, 48]) * edge[..., None]  # mocha
+    mark, a = logo_tile(side)
     img[pad:pad + side, pad:pad + side] = img[pad:pad + side, pad:pad + side] * (1 - a) + mark[..., :3] * a
     # The two lines as one block centered on the button: the small line's cap height to the large line's baseline.
     cap_small, cap_large = 0.70 * 10.5 * scale, 0.70 * 21.5 * scale
     line_gap = 6.5 * scale
     y0 = h / 2 - (cap_small + line_gap + cap_large) / 2
     tx = pad + side + gap
-    paste(img, small, tx, int(round(y0)) - small_cap, (118, 88, 110) if light else (226, 200, 204))
-    paste(img, large, tx, int(round(y0 + cap_small + line_gap)) - large_cap, (34, 18, 44) if light else (252, 240, 232))
+    paste(img, small, tx, int(round(y0)) - small_cap, (107, 90, 76) if light else (214, 202, 186))
+    paste(img, large, tx, int(round(y0 + cap_small + line_gap)) - large_cap, (43, 33, 26) if light else (251, 248, 243))
     rgba = np.dstack([np.clip(img, 0, 255), shape * 255]).astype(np.uint8)
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, "download-light.png" if light else "download.png")
@@ -403,9 +399,28 @@ def download_buttons():
     download_button(light=True)
 
 
+def wide_logo(light=False, h=200):
+    """The README's header: the owner's whole logo, the TV beside the name, on transparency, with a
+    little room around it. For a light page as drawn, for a dark one with the TV and the name in
+    linen and the bars in espresso. The README shows it 420 px wide."""
+    art = whole(h, dark=not light)
+    pad = int(round(h * 0.06))
+    img = Image.new("RGBA", (art.width + 2 * pad, art.height + 2 * pad), (0, 0, 0, 0))
+    img.alpha_composite(art, (pad, pad))
+    os.makedirs(OUT, exist_ok=True)
+    path = os.path.join(OUT, "logo-wide.png" if light else "logo-wide-dark.png")
+    img.save(path, optimize=True)
+    print(path, os.path.getsize(path) // 1024, "KB", f"{img.width}x{img.height}")
+
+
+def wide_logos():
+    wide_logo()
+    wide_logo(light=True)
+
+
 if __name__ == "__main__":
     # Pictures named on the command line (like download_buttons) are made alone; without names, all of them.
-    steps = [now_playing, now_playing_light, day_and_night, download_buttons]
+    steps = [now_playing, now_playing_light, day_and_night, download_buttons, wide_logos]
     names = sys.argv[1:] or [step.__name__ for step in steps]
     for step in steps:
         if step.__name__ in names:
