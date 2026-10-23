@@ -27,7 +27,7 @@ OUT = os.path.join(ROOT, "docs", "screenshots")
 FONTS = os.path.join(ROOT, "layers", "ui", "src", "main", "res", "font")
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from make_launcher_assets import NAVY, TIGHT, logo  # noqa: E402  (the same mark as on the TV's home screen)
+from make_launcher_assets import logo  # noqa: E402  (the same logo as on the TV's home screen)
 
 
 # Color ---------------------------------------------------------------------------------------
@@ -279,14 +279,13 @@ def dark_room(W, H, tv, colors, strength, albedo=(122, 118, 114), ambient=0.008,
     return to_srgb(tonemap(lin)), lin / paint
 
 
-def logo_tile(side, ss=4, extent=TIGHT):
-    """The logo on its own plum tile with round corners, as on the TV's home screen: its colors and
-    its coverage, for light backgrounds, where the bare logo would fade. A larger [extent] leaves
-    more of the tile around it."""
+def logo_tile(side, ss=4):
+    """The whole logo, the white TV on its blue square, with round corners: its colors and its
+    coverage."""
     tile = Image.new("L", (side * ss, side * ss), 0)
     ImageDraw.Draw(tile).rounded_rectangle([0, 0, side * ss - 1, side * ss - 1], radius=int(side * 0.24 * ss), fill=255)
     a = np.asarray(tile.resize((side, side), Image.LANCZOS), dtype=np.float64) / 255.0
-    return np.asarray(logo(side, extent=extent), dtype=np.float64)[..., :3], a[..., None]
+    return np.asarray(logo(side), dtype=np.float64)[..., :3], a[..., None]
 
 
 def now_playing():
@@ -353,11 +352,10 @@ def ink_width(mask):
 
 
 def download_button(scale=4, light=False):
-    """The README's download button, built like a store badge: the logo, then "Download for" over
-    "Android TV", the same space on every side, flat plum with a hairline edge. The [light] one, for
-    light pages, is pale with plum words, and the logo sits on its own plum tile as on the TV's home
-    screen. Its width follows what it holds; the README shows it 236 px
-    wide."""
+    """The README's download button, built like a store badge: the logo on its tile, then "Download
+    for" over "Android TV", the same space on every side, with a hairline edge. For a dark page it is
+    near black with pale words, the [light] one white with dark words. Its width follows what it
+    holds; the README shows it 236 px wide."""
     h = 64 * scale
     side = int(round(h * 0.60))                  # the logo
     pad = (h - side) // 2                        # the same space left of it as above and below
@@ -376,22 +374,20 @@ def download_button(scale=4, light=False):
     edge = np.asarray(edge.resize((w, h), Image.LANCZOS), dtype=np.float64) / 255.0
     img = np.empty((h, w, 3))
     if light:
-        img[:] = np.array([250, 244, 240], dtype=np.float64)
-        img = img * (1 - edge[..., None] * 0.16) + np.array(NAVY) * edge[..., None] * 0.16
-        mark, a = logo_tile(side)
+        img[:] = np.array([255, 255, 255], dtype=np.float64)
+        img = img * (1 - edge[..., None]) + np.array([208, 215, 222]) * edge[..., None]
     else:
-        img[:] = np.array(NAVY, dtype=np.float64)
-        img = img * (1 - edge[..., None] * 0.22) + np.array([200, 160, 170]) * edge[..., None] * 0.22
-        mark = np.asarray(logo(side, background=None), dtype=np.float64)
-        a = mark[..., 3:4] / 255.0
+        img[:] = np.array([22, 27, 34], dtype=np.float64)
+        img = img * (1 - edge[..., None]) + np.array([61, 68, 77]) * edge[..., None]
+    mark, a = logo_tile(side)
     img[pad:pad + side, pad:pad + side] = img[pad:pad + side, pad:pad + side] * (1 - a) + mark[..., :3] * a
     # The two lines as one block centered on the button: the small line's cap height to the large line's baseline.
     cap_small, cap_large = 0.70 * 10.5 * scale, 0.70 * 21.5 * scale
     line_gap = 6.5 * scale
     y0 = h / 2 - (cap_small + line_gap + cap_large) / 2
     tx = pad + side + gap
-    paste(img, small, tx, int(round(y0)) - small_cap, (118, 88, 110) if light else (226, 200, 204))
-    paste(img, large, tx, int(round(y0 + cap_small + line_gap)) - large_cap, (34, 18, 44) if light else (252, 240, 232))
+    paste(img, small, tx, int(round(y0)) - small_cap, (89, 99, 110) if light else (190, 198, 207))
+    paste(img, large, tx, int(round(y0 + cap_small + line_gap)) - large_cap, (22, 27, 34) if light else (240, 243, 247))
     rgba = np.dstack([np.clip(img, 0, 255), shape * 255]).astype(np.uint8)
     os.makedirs(OUT, exist_ok=True)
     path = os.path.join(OUT, "download-light.png" if light else "download.png")
@@ -405,13 +401,13 @@ def download_buttons():
 
 
 def wide_logo(light=False, h=240):
-    """The README's header: the logo on its plum tile beside the name, on transparency, as wide as
-    the two need. The name is plum for a light page and pale for a dark one; the tile stays the same
+    """The README's header: the logo on its tile beside the name, on transparency, as wide as the two
+    need. The name is near black for a light page and pale for a dark one; the tile stays the same
     on both. The README shows it 420 px wide."""
     side = h
-    mark, a = logo_tile(side, extent=int(TIGHT / 0.78))
+    mark, a = logo_tile(side)
     size = 0.40 * h / 0.70                       # the name's cap height 40% of the tile's
-    name, cap_row = text_mask("Encore", "jost.ttf", size, 500, tracking=-0.01, kern=True)
+    name, cap_row = text_mask("Encore", "jost.ttf", size, 600, tracking=-0.01, kern=True)
     gap = int(round(h * 0.20))
     w = side + gap + ink_width(name) + int(round(h * 0.04))
     rgb = np.zeros((h, w, 3))
@@ -422,7 +418,7 @@ def wide_logo(light=False, h=240):
     y = int(round(h / 2 - 0.70 * size / 2)) - cap_row
     cols = np.nonzero(name.max(axis=0) > 0.02)[0]
     x = side + gap - int(cols[0])
-    ink = np.array((34, 18, 44) if light else (252, 240, 232), dtype=np.float64)
+    ink = np.array((22, 27, 34) if light else (240, 243, 247), dtype=np.float64)
     region = alpha[y:y + name.shape[0], x:x + name.shape[1]]
     cover = name[: region.shape[0], : region.shape[1]]
     rgb[y:y + cover.shape[0], x:x + cover.shape[1]] = ink

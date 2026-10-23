@@ -39,10 +39,12 @@ theme (`<picture>` with `prefers-color-scheme`). No mockup carries text of its o
 bugs: the issue form (`bug_report.yml`) says so kindly and sends ideas and questions to the
 Discussions.
 
-The logo is `tools/logo.svg` (a cover's rounded square with a warm light in it and a progress bar
-part of the way along under it, peach on a deep plum), drawn from it by
-`tools/make_launcher_assets.py` for the banner, the icons and the button (and through it by
-`tools/make_readme_pictures.py` for the README's wide logo), never scaled from a bitmap. Release notes are easy to scan and in everyday words: a small heading for each kind of
+The logo is `tools/logo.svg` (a white TV with an antenna on a sky blue square, four bars cut out
+of its screen like records standing on a shelf, in the manner of Music Assistant's own logo, as the
+owner asked, without its letters), drawn from it with CairoSVG by `tools/make_launcher_assets.py`
+for the banner, the icons and the button (and through it by `tools/make_readme_pictures.py` for
+the README's wide logo), never scaled from a bitmap; the notification icon
+(`ic_notification.xml`) is the same TV as a vector. Release notes are easy to scan and in everyday words: a small heading for each kind of
 change there is (`### New`, `### Better`, `### Bug fixes`), under it a few short points a user
 understands at once, nothing technical, never speaking to the reader and only claiming what is
 sure to work. `docs/` holds only the notes of the releases on GitHub and the README's pictures:
@@ -103,7 +105,7 @@ effort goes into the app, not into documents.
 python3 ci/compare-pictures.py before/ layers/ui/build/screenshots/ changes/   # what looks different (Pillow)
 ./gradlew :androidApp:lintRelease                              # Android Lint over the app and every layer: every warning fails
 ./gradlew :androidApp:assembleRelease                          # R8-minified APK, signed with the debug key
-python3 tools/make_launcher_assets.py                          # re-render banner + icons from the logo (Pillow)
+python3 tools/make_launcher_assets.py                          # re-render banner + icons from the logo (Pillow, CairoSVG)
 python3 tools/make_readme_pictures.py                          # README mockups, download button, wide logo (Pillow, numpy; names like wide_logos make only those)
 ./gradlew :speaker:testDebugUnitTest --tests '*EndToEndTest*' -Pencore.sendspin=$PWD/venv/bin/python   # the speaker against aiosendspin 10.2.0 (python3 -m venv venv && venv/bin/pip install 'aiosendspin[server]==10.2.0')
 ```

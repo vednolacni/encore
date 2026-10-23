@@ -1,13 +1,8 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1024" height="1024" viewBox="0 0 1024 1024">
   <title>Encore</title>
-  <rect width="1024" height="1024" fill="#1A0F24"/>
-  <g fill="none">
-    <path d="M330 206H694A68 68 0 0 1 762 274V638A68 68 0 0 1 694 706H330A68 68 0 0 1 262 638V274A68 68 0 0 1 330 206Z" stroke="#F2A47C" stroke-width="22"/>
-    <path d="M272 800H752" stroke="#5A3C63" stroke-width="20"/>
-    <path d="M272 800H468" stroke="#F2A47C" stroke-width="20"/>
-  </g>
-  <circle cx="512" cy="456" r="118" fill="#FFD6A6"/>
-  <circle cx="752" cy="800" r="10" fill="#5A3C63"/>
-  <circle cx="272" cy="800" r="10" fill="#F2A47C"/>
-  <circle cx="468" cy="800" r="10" fill="#F2A47C"/>
+  <rect id="background" width="1024" height="1024" fill="#18BCF2"/>
+  <!-- The TV, with four bars cut out of its screen like records standing on a shelf. -->
+  <path fill="#F2F4F9" fill-rule="evenodd" d="M296 384H728A64 64 0 0 1 792 448V700A64 64 0 0 1 728 764H296A64 64 0 0 1 232 700V448A64 64 0 0 1 296 384Z M372 496A20 20 0 0 1 412 496V652A20 20 0 0 1 372 652Z M452 496A20 20 0 0 1 492 496V652A20 20 0 0 1 452 652Z M532 496A20 20 0 0 1 572 496V652A20 20 0 0 1 532 652Z M612 496A20 20 0 0 1 652 496V652A20 20 0 0 1 612 652Z"/>
+  <!-- Its antenna. -->
+  <path fill="none" stroke="#F2F4F9" stroke-width="40" stroke-linecap="round" d="M512 392L416 280M512 392L608 280"/>
 </svg>
