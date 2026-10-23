@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
-<!-- The logo's TV with its bars and antenna, for the speaker's notification (Android needs an icon there). -->
+<!-- The logo's TV with its sound wave and antenna, for the speaker's notification (Android needs an icon there). -->
 <vector xmlns:android="http://schemas.android.com/apk/res/android"
     android:width="24dp"
     android:height="24dp"
@@ -8,7 +8,7 @@
     <path
         android:fillColor="#FFFFFFFF"
         android:fillType="evenOdd"
-        android:pathData="M4.3,7.4h15.4a2.3,2.3 0,0 1,2.3 2.3v9a2.3,2.3 0,0 1,-2.3 2.3h-15.4a2.3,2.3 0,0 1,-2.3 -2.3v-9a2.3,2.3 0,0 1,2.3 -2.3z M7,11.4a0.72,0.72 0,0 1,1.44 0v5.6a0.72,0.72 0,0 1,-1.44 0z M9.86,11.4a0.72,0.72 0,0 1,1.44 0v5.6a0.72,0.72 0,0 1,-1.44 0z M12.7,11.4a0.72,0.72 0,0 1,1.44 0v5.6a0.72,0.72 0,0 1,-1.44 0z M15.56,11.4a0.72,0.72 0,0 1,1.44 0v5.6a0.72,0.72 0,0 1,-1.44 0z" />
+        android:pathData="M4.3,7.4h15.4a2.3,2.3 0,0 1,2.3 2.3v9a2.3,2.3 0,0 1,-2.3 2.3h-15.4a2.3,2.3 0,0 1,-2.3 -2.3v-9a2.3,2.3 0,0 1,2.3 -2.3z M4.93,13.21a0.64,0.64 0,0 1,1.29 0v2a0.64,0.64 0,0 1,-1.29 0z M7.07,11.86a0.64,0.64 0,0 1,1.29 0v4.71a0.64,0.64 0,0 1,-1.29 0z M9.21,10.36a0.64,0.64 0,0 1,1.29 0v7.71a0.64,0.64 0,0 1,-1.29 0z M11.36,11.36a0.64,0.64 0,0 1,1.29 0v5.71a0.64,0.64 0,0 1,-1.29 0z M13.5,10.64a0.64,0.64 0,0 1,1.29 0v7.14a0.64,0.64 0,0 1,-1.29 0z M15.64,12.36a0.64,0.64 0,0 1,1.29 0v3.71a0.64,0.64 0,0 1,-1.29 0z M17.79,13.36a0.64,0.64 0,0 1,1.29 0v1.71a0.64,0.64 0,0 1,-1.29 0z" />
     <path
         android:pathData="M12,7.7L8.6,3.7M12,7.7L15.4,3.7"
         android:strokeColor="#FFFFFFFF"

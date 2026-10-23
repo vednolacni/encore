@@ -3,9 +3,9 @@
 
 Usage: python3 tools/make_launcher_assets.py   (needs Pillow and CairoSVG)
 
-The logo is tools/logo.svg: a white TV with an antenna on a sky blue square, four bars cut out of
-its screen like records standing on a shelf, in the manner of Music Assistant's own logo. It is
-drawn here from the SVG at every size, never scaled from a bitmap.
+The logo is tools/logo.svg: a white TV with an antenna on a sky blue square, a sound wave cut out
+of its screen, in the manner of Music Assistant's own logo. It is drawn here from the SVG at every
+size, never scaled from a bitmap.
 """
 import io
 import os
