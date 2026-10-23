@@ -282,8 +282,12 @@ jobs:
         include:
           - api: 28
             version: 9
+            gpu: swiftshader_indirect
+          # SwiftShader as the host's renderer brings the Android 14 emulator down a moment after
+          # the cover's colors show; ANGLE on SwiftShader draws them.
           - api: 34
             version: 14
+            gpu: swangle_indirect
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
@@ -325,7 +329,7 @@ jobs:
           profile: tv_1080p
           disable-animations: false
           disk-size: 3G
-          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim -camera-back none -no-metrics
+          emulator-options: -no-window -gpu ${{ matrix.gpu }} -noaudio -no-boot-anim -camera-back none -no-metrics
           script: bash ci/tv-smoke.sh encore.apk
 
       - name: Upload the smoke test results

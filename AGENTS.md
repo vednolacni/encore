@@ -165,7 +165,10 @@ python3 tools/make_readme_pictures.py                          # README mockups 
   for all of them. A push or pull request that changes only the texts and
   pictures around the app (README, AGENTS.md, LICENSE, `docs/`, `tools/`, `.claude/`, the issue
   templates) runs nothing; tags and manual runs always run everything. The emulator jobs fetch
-  their system image with `ci/install-system-image.sh`, which tries a broken download again.
+  their system image with `ci/install-system-image.sh`, which tries a broken download again. The
+  emulators draw in software: Android TV 9 with SwiftShader, Android TV 14 with ANGLE on
+  SwiftShader (`swangle_indirect`), since SwiftShader alone brought that emulator down a moment
+  after the cover's colors showed (the app kept running; the emulator went away).
 
 ## Signing and releases
 
