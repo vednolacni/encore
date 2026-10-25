@@ -40,6 +40,21 @@ class MaClientTest {
     }
 
     @Test
+    fun `random songs are asked from the library in random order, as a list or a page`() = runBlocking {
+        server.enqueue(MockResponse.Builder().body("""[{"uri":"library://track/7","name":"A"},{"name":"no uri"},{"uri":"apple_music://track/9"}]""").build())
+        assertThat(client.randomTracks(100)).containsExactly("library://track/7", "apple_music://track/9").inOrder()
+        val body = Json.parseToJsonElement(server.takeRequest().body!!.utf8()).jsonObject
+        assertThat(body["command"]!!.jsonPrimitive.content).isEqualTo("music/tracks/library_items")
+        val args = body["args"]!!.jsonObject
+        assertThat(args["order_by"]!!.jsonPrimitive.content).isEqualTo("random")
+        assertThat(args["limit"]!!.jsonPrimitive.int).isEqualTo(100)
+        server.enqueue(MockResponse.Builder().body("""{"items":[{"uri":"library://track/1"}],"limit":100}""").build())
+        assertThat(client.randomTracks(100)).containsExactly("library://track/1")
+        server.enqueue(MockResponse.Builder().body("[]").build())
+        assertThat(client.randomTracks(100)).isEmpty()
+    }
+
+    @Test
     fun `the check tells a rejected token from a server that is not there`() = runBlocking {
         server.enqueue(MockResponse.Builder().body("[]").build())
         assertThat(client.check()).isEqualTo(MaLink.CONNECTED)
