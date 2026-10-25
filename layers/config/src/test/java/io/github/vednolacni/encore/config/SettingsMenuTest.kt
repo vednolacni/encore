@@ -9,6 +9,8 @@ import io.github.vednolacni.encore.domain.MediaKind
 import io.github.vednolacni.encore.domain.OwnValue
 import io.github.vednolacni.encore.domain.SleepChoice
 import io.github.vednolacni.encore.domain.SpeakerLink
+import io.github.vednolacni.encore.domain.UpdateInfo
+import io.github.vednolacni.encore.domain.UpdateState
 import io.github.vednolacni.encore.text.TestTexts
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -86,18 +88,23 @@ class SettingsMenuTest {
             MenuContext(sleep = SleepChoice.MIN_30, sleepAt = 1_791_483_667_000L),
             MenuContext(sleep = SleepChoice.ITEM_END, kind = MediaKind.PODCAST),
             MenuContext(LinkState.CONNECTED, ma = MaLink.CONNECTED, speaker = SpeakerLink.TOO_OLD),
+            MenuContext(update = UpdateInfo("2026.10.5", "v2026.11.0")),
+            MenuContext(update = UpdateInfo("2026.10.5", "v2026.11.0", state = UpdateState.DOWNLOADING)),
+            MenuContext(update = UpdateInfo("2026.10.5", "v2026.10.5", state = UpdateState.FAILED)),
+            MenuContext(update = UpdateInfo("2026.10.24 (abc1234)")),
         )
         for (s in listOf(Settings(), configured, configured.copy(intensity = Intensity.OFF, volumeKeys = true), withMa, withMa.copy(tvSpeaker = true), withLights, withValues)) {
             // The lines that are no stored setting: the connections, the sleep timer, the language
-            // (the system keeps it), and the lights and the values until they are set up.
+            // (the system keeps it), the update, and the lights and the values until they are set up.
             val needs = setOfNotNull(
                 MenuEntry.BRIGHTNESS.takeIf { !s.roomLights.isSet },
                 MenuEntry.OFF_LIGHTS.takeIf { !s.roomLights.isSet },
                 MenuEntry.VALUES.takeIf { s.ownValues.isEmpty() },
                 MenuEntry.LYRICS.takeIf { !s.hasMusicAssistant },
+                MenuEntry.SPEAKER.takeIf { !s.hasMusicAssistant },
                 MenuEntry.PLAY_HERE.takeIf { !s.hasMusicAssistant },
             )
-            val actions = setOf(MenuEntry.CONNECTION, MenuEntry.MUSIC_ASSISTANT, MenuEntry.SLEEP_TIMER, MenuEntry.LANGUAGE) + needs
+            val actions = setOf(MenuEntry.CONNECTION, MenuEntry.MUSIC_ASSISTANT, MenuEntry.SLEEP_TIMER, MenuEntry.LANGUAGE, MenuEntry.UPDATE) + needs
             for (ctx in contexts) {
                 for (row in SettingsMenu.sections.flatMap { SettingsMenu.rows(s, ctx, de, it) }) {
                     val entry = row.entry!!
@@ -130,7 +137,7 @@ class SettingsMenuTest {
 
     @Test
     fun `the first level shows the groups, each saying what is in it, and every setting is in one`() {
-        val groups = SettingsMenu.groups(de)
+        val groups = SettingsMenu.groups(configured, MenuContext(), de)
         assertThat(groups.map { it.label }).containsExactly("Bild", "Informationen", "Licht", "Fernbedienung", "Timer", "System").inOrder()
         for (g in groups) {
             assertThat(g.entry).isNull()
@@ -142,8 +149,44 @@ class SettingsMenuTest {
             MenuEntry.APPEARANCE, MenuEntry.BACKGROUND, MenuEntry.INTENSITY, MenuEntry.MOTION,
         ).inOrder()
         assertThat(SettingsMenu.entriesOf(MenuSection.SYSTEM)).containsExactly(
-            MenuEntry.CONNECTION, MenuEntry.MUSIC_ASSISTANT, MenuEntry.PLAY_HERE, MenuEntry.LANGUAGE,
+            MenuEntry.CONNECTION, MenuEntry.MUSIC_ASSISTANT, MenuEntry.SPEAKER, MenuEntry.PLAY_HERE, MenuEntry.LANGUAGE, MenuEntry.UPDATE,
+            MenuEntry.UPDATE_CHECK,
         ).inOrder()
+    }
+
+    @Test
+    fun `the update line says what is known of a new version, the system group tells of one, and looking for them is a switch`() {
+        fun ctx(latest: String?, state: UpdateState = UpdateState.IDLE, name: String = "2026.10.5") =
+            MenuContext(update = UpdateInfo(name, latest, state))
+        fun value(c: MenuContext) = SettingsMenu.value(MenuEntry.UPDATE, configured, c, de)
+        assertThat(value(ctx(null))).isEqualTo("Nicht geprüft")
+        assertThat(value(ctx(null, state = UpdateState.CHECKING))).isEqualTo("Wird geprüft")
+        assertThat(value(ctx("v2026.10.5"))).isEqualTo("Auf dem neuesten Stand")
+        assertThat(value(ctx("v2026.11.0"))).isEqualTo("Version\u00A02026.11.0")
+        assertThat(value(ctx("v2026.11.0", state = UpdateState.DOWNLOADING))).isEqualTo("Wird geladen")
+        assertThat(value(ctx("v2026.11.0", state = UpdateState.FAILED))).isEqualTo("Hat nicht geklappt")
+        // A build of one's own names itself and looks for nothing.
+        assertThat(value(ctx("v2026.11.0", name = "2026.10.24 (abc1234)"))).isEqualTo("2026.10.24 (abc1234)")
+        // Looking is off until it is turned on.
+        val on = configured.copy(updateCheck = true)
+        val off = configured
+        fun system(c: MenuContext, s: Settings = on) = SettingsMenu.groups(s, c, de).single { it.section == MenuSection.SYSTEM }.value
+        assertThat(system(ctx("v2026.11.0"))).isEqualTo("Neue Version")
+        assertThat(system(ctx("v2026.10.5"))).isEqualTo("")
+        // Turned off, Encore looks for nothing by itself and the group tells of nothing; the
+        // Update line still says what is known, and only OK acts on it.
+        assertThat(system(ctx("v2026.11.0"), off)).isEqualTo("")
+        assertThat(SettingsMenu.value(MenuEntry.UPDATE, off, ctx(null), de)).isEqualTo("Nicht geprüft")
+        assertThat(SettingsMenu.step(MenuEntry.UPDATE, configured, -1)).isNull()
+        // Check for updates is a switch like the others.
+        assertThat(SettingsMenu.value(MenuEntry.UPDATE_CHECK, on, ctx(null), de)).isEqualTo("An")
+        assertThat(SettingsMenu.value(MenuEntry.UPDATE_CHECK, off, ctx(null), de)).isEqualTo("Aus")
+        assertThat(SettingsMenu.step(MenuEntry.UPDATE_CHECK, on, -1)).isEqualTo(off)
+        assertThat(SettingsMenu.step(MenuEntry.UPDATE_CHECK, off, +1, wrap = true)).isEqualTo(on)
+        // The explanations say what each line does now.
+        assertThat(SettingsMenu.description(MenuEntry.UPDATE, configured, ctx("v2026.11.0"), de)).contains("OK\u00A0lädt es")
+        assertThat(SettingsMenu.description(MenuEntry.UPDATE_CHECK, on, ctx(null), de)).contains("höchstens einmal am\u00A0Tag")
+        assertThat(SettingsMenu.description(MenuEntry.UPDATE_CHECK, off, ctx(null), de)).contains("OK\u00A0bei Update fragt trotzdem")
     }
 
     @Test
@@ -191,5 +234,38 @@ class SettingsMenuTest {
         // What keeps it from playing is still said then.
         assertThat(SettingsMenu.description(MenuEntry.PLAY_HERE, followed, MenuContext(speaker = SpeakerLink.TOO_OLD), en)).contains("2.10.7")
         assertThat(SettingsMenu.description(MenuEntry.PLAY_HERE, followed, MenuContext(speaker = SpeakerLink.NO_KEY), en)).contains("keeps trying")
+    }
+
+    @Test
+    fun `the speaker switches between the one followed and this TV, which then plays here`() {
+        val en = TestTexts.english()
+        assertThat(SettingsMenu.label(MenuEntry.SPEAKER, en)).isEqualTo("Speaker")
+        assertThat(SettingsMenu.value(MenuEntry.SPEAKER, configured, MenuContext(), de)).isEqualTo(SettingsMenu.value(MenuEntry.LYRICS, configured, MenuContext(), de))
+        assertThat(SettingsMenu.step(MenuEntry.SPEAKER, configured, +1)).isNull()
+        val withMa = configured.copy(maUrl = "http://192.168.1.5:8095", maToken = "t")
+        assertThat(SettingsMenu.value(MenuEntry.SPEAKER, withMa, MenuContext(speakerName = "Wohnzimmer"), de)).isEqualTo("Wohnzimmer")
+        // Until Home Assistant has told its name, the entity's stands in.
+        assertThat(SettingsMenu.value(MenuEntry.SPEAKER, withMa, MenuContext(), de)).isEqualTo("Wz")
+        val tv = SettingsMenu.step(MenuEntry.SPEAKER, withMa, +1)!!
+        assertThat(tv.entityId).isEqualTo(EntityId.THIS_TV)
+        assertThat(tv.speakerOn).isTrue()
+        assertThat(tv.otherSpeaker).isEqualTo("media_player.wz")
+        assertThat(SettingsMenu.value(MenuEntry.SPEAKER, tv, MenuContext(speakerName = "Wohnzimmer"), de)).isEqualTo("Dieser Fernseher")
+        assertThat(SettingsMenu.opensSetup(MenuEntry.SPEAKER, tv)).isFalse()
+        // Back again, and this TV still plays as one of the speakers.
+        val back = SettingsMenu.step(MenuEntry.SPEAKER, tv, -1)!!
+        assertThat(back.entityId).isEqualTo("media_player.wz")
+        assertThat(back.tvSpeaker).isTrue()
+        // Playing here turned off while this TV is followed goes back too.
+        assertThat(SettingsMenu.opensSetup(MenuEntry.PLAY_HERE, tv)).isFalse()
+        assertThat(SettingsMenu.description(MenuEntry.PLAY_HERE, tv, MenuContext(), en)).contains("Turned off")
+        val off = SettingsMenu.step(MenuEntry.PLAY_HERE, tv, +1)!!
+        assertThat(off.entityId).isEqualTo("media_player.wz")
+        assertThat(off.tvSpeaker).isFalse()
+        // This TV chosen on the phone with no speaker before it: another one is chosen there.
+        val only = withMa.copy(entityId = EntityId.THIS_TV, tvSpeaker = true)
+        assertThat(SettingsMenu.step(MenuEntry.SPEAKER, only, +1)).isNull()
+        assertThat(SettingsMenu.opensSetup(MenuEntry.SPEAKER, only)).isTrue()
+        assertThat(SettingsMenu.description(MenuEntry.SPEAKER, only, MenuContext(), en)).contains("QR")
     }
 }

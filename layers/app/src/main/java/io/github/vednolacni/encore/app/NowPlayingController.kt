@@ -44,6 +44,7 @@ import io.github.vednolacni.encore.domain.SpeakerStatus
 import io.github.vednolacni.encore.domain.SunClock
 import io.github.vednolacni.encore.domain.Timing
 import io.github.vednolacni.encore.domain.TrackInfo
+import io.github.vednolacni.encore.domain.UpdateInfo
 import io.github.vednolacni.encore.domain.ValueText
 import io.github.vednolacni.encore.data.LightBridge
 import io.github.vednolacni.encore.lights.LightSync
@@ -161,6 +162,8 @@ class NowPlayingController(
     private val pairingToken: () -> String? = { null },
     /** What this TV plays, as a sound feed, while it plays as a speaker. */
     ownSound: () -> SoundFeed? = { null },
+    /** Encore's own new versions; none where nothing looks for them. */
+    private val updates: Updates? = null,
 ) {
     private val _ui = MutableStateFlow(UiState())
     val ui: StateFlow<UiState> = _ui.asStateFlow()
@@ -205,6 +208,10 @@ class NowPlayingController(
         override val source: NowPlayingSource? get() = this@NowPlayingController.source
         override val texts: Texts get() = localizer.texts.value
         override val speaker: SpeakerLink get() = this@NowPlayingController.speaker.value.link
+        override val update: UpdateInfo get() = updates?.info?.value ?: UpdateInfo()
+        override fun update() {
+            updates?.ok()
+        }
         override var language: AppLanguage
             get() = localizer.language
             set(value) {
@@ -306,15 +313,24 @@ class NowPlayingController(
         speakerJob = scope.launch {
             speaker.collect { status -> synchronized(this@NowPlayingController) { soundSelection.update(_ui.value.source, status) } }
         }
+        updates?.let { u ->
+            updatesJob = scope.launch { u.info.collect { recompute() } }
+            updatesDue = true
+        }
     }
 
     private var textsJob: Job? = null
     private var speakerJob: Job? = null
+    private var updatesJob: Job? = null
+
+    /** A screen started showing: Encore asks for a new version once the stored settings are in. */
+    @Volatile private var updatesDue = false
 
     private fun stop() {
         settingsJob?.cancel()
         textsJob?.cancel()
         speakerJob?.cancel()
+        updatesJob?.cancel()
         ticker?.cancel()
         setupJob?.cancel()
         setupServer.stop()
@@ -425,6 +441,23 @@ class NowPlayingController(
     /** Held left or right: by chapters, else to the item before or after. */
     fun jump(direction: Int) = seeking.jump(direction)
 
+    /**
+     * Left and right change a song once let go, and held, seek through it: with a length to seek
+     * in, on a player that can.
+     */
+    val holdKeys: Boolean
+        get() {
+            val s = settings.value
+            val p = _ui.value.source.player
+            return s.remoteControl && !spokenKeys && (_ui.value.screen as? Screen.Stage)?.track?.durationMs != null && p?.abilities?.seek == true
+        }
+
+    /** Left or right held [heldMs] on a song: back ([direction] -1) or ahead (+1), the farther the longer. */
+    fun hold(direction: Int, heldMs: Long) = seeking.hold(direction, heldMs)
+
+    /** The key held is let go: the place it reached is sent. */
+    fun letGo() = seeking.letGo()
+
     // --- settings menu -------------------------------------------------------------------
 
     private val localEdits = AtomicInteger()
@@ -520,6 +553,9 @@ class NowPlayingController(
 
     @Synchronized
     private fun onSettings(s: Settings) {
+        // Asked for after a start, and when asking is turned on again, unless it is off.
+        if (s.updateCheck && (updatesDue || !settings.value.updateCheck)) updates?.checkIfDue()
+        updatesDue = false
         settings.value = s
         val timing = timingFor(s)
         if (timing != machine.timing) {

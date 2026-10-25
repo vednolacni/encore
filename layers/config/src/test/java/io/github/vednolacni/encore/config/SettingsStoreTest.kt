@@ -65,6 +65,7 @@ class SettingsStoreTest {
             haRefreshToken = "refresh",
             haClientId = "http://192.168.1.23:8765/",
             entityId = "media_player.kitchen",
+            otherSpeaker = "media_player.living_room",
             sunEntity = "sun.home",
             sleepAfterMinutes = 45,
             sleepAction = SleepAction.CLOSE,
@@ -91,6 +92,7 @@ class SettingsStoreTest {
             spokenSkip = false,
             quickActions = listOf(QuickAction("Ungroup", "script.ungroup", condition = Condition("media_player.kitchen", "group_members", Condition.Test.ABOVE, "1"))),
             ownValues = listOf(OwnValue("Outside", "sensor.outside_temperature")),
+            updateCheck = true,
         )
         // A setting the store forgets would come back as its default, so every one differs from it here.
         val defaults = Settings()

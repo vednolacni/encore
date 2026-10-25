@@ -129,7 +129,7 @@ install there.
 | Button | Action |
 | --- | --- |
 | OK | Play or pause (hold to open the settings) |
-| Left / Right | Previous or next song |
+| Left / Right | Previous or next song (hold to seek) |
 | Down | Choose the buttons under the bar, and press again for the quick settings |
 | Up / Back | Leave the buttons or the quick settings |
 
@@ -157,6 +157,9 @@ Encore is closed.
 
 Encore has no accounts and doesn't track you. Your logins for Home Assistant and Music Assistant
 are stored encrypted on the TV and never go anywhere but your own servers.
+
+It asks GitHub for a new version only when you press OK on Update under System in the settings.
+If you turn on Check for updates there, it also asks when it starts, at most once a day.
 
 </details>
 

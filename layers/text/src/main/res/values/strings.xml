@@ -29,7 +29,7 @@
     <string name="about_section_lights">Lights in the room that glow in the music’s colors.</string>
     <string name="about_section_remote">What the remote’s keys do.</string>
     <string name="about_section_timer">The sleep timer, and when Encore turns off.</string>
-    <string name="about_section_system">Home Assistant, Music Assistant, playing here and the language.</string>
+    <string name="about_section_system">Home Assistant, Music Assistant, playing here, the language and updates.</string>
 
     <!-- Settings menu: lines -->
     <string name="entry_appearance">Appearance</string>
@@ -54,6 +54,16 @@
     <string name="entry_sleep_action">When turning off</string>
     <string name="entry_language">Language</string>
     <string name="entry_play_here">Play here</string>
+    <string name="entry_speaker">Speaker</string>
+    <string name="entry_update">Update</string>
+    <string name="entry_update_check">Check for updates</string>
+    <string name="update_notice">New version</string>
+    <string name="update_current">Up to date</string>
+    <string name="update_checking">Checking</string>
+    <string name="update_unknown">Not checked</string>
+    <string name="update_version">Version %1$s</string>
+    <string name="update_downloading">Downloading</string>
+    <string name="update_failed">Didn’t work</string>
 
     <!-- Settings menu: values -->
     <string name="appearance_auto">Automatic</string>
@@ -147,7 +157,7 @@
     <string name="about_lights_only_on">Lights that are off stay off. One you switch on joins in.</string>
     <string name="about_lights_switch_on">Lights that are off go on with the music and off again after it.</string>
     <string name="about_lights_on">Each light glows in one of the picture’s colors, this bright by day. In the evening and at night they dim by themselves. After the music they are as before.</string>
-    <string name="about_remote_on">OK pauses and plays on; left and right change the track.</string>
+    <string name="about_remote_on">OK pauses and plays on; left and right change the track. Held, they seek within it.</string>
     <string name="about_remote_off">The remote does not control the music; holding OK still opens this menu.</string>
     <string name="about_up_down_volume">Arrow up and down change the speaker’s volume; the quick settings are not available then.</string>
     <string name="about_up_down_buttons">Arrow down chooses the buttons at the bottom, and down again opens the quick settings. Back closes them.</string>
@@ -168,10 +178,21 @@
     <string name="about_ma_set_up">Optional. With Music Assistant come the lyrics, the album’s year and the chapters of audiobooks. OK shows the QR code for setup.</string>
     <string name="about_ma">It brings the lyrics, the album’s year and chapters. OK shows the QR code. On your phone you change address and token.</string>
     <string name="about_language">The language of the screens and the setup page. The system language is the TV’s.</string>
+    <string name="about_update_current">Encore %1$s is the newest version. OK asks GitHub again.</string>
+    <string name="about_update_unknown">It isn’t known yet whether there’s a new version. OK asks GitHub now.</string>
+    <string name="about_update_available">Encore %1$s is out. OK downloads it, and the TV asks before installing it.</string>
+    <string name="about_update_check_on">When Encore starts, it asks GitHub for a new version at most once a day.</string>
+    <string name="about_update_check_off">Encore doesn’t look for new versions by itself. OK on Update still asks GitHub.</string>
+    <string name="about_update_downloading">The new version is downloading. Then the TV asks whether to install it.</string>
+    <string name="about_update_failed">The new version couldn’t be downloaded. OK tries again.</string>
+    <string name="about_update_own">This Encore was built from its code and doesn’t look for new versions.</string>
     <string name="about_play_here_set_up">With Music Assistant, this TV can play music in time with your other speakers. OK shows the QR code to set it up on your phone.</string>
+    <string name="about_speaker">The speaker Encore shows and the remote controls, either the one chosen on your phone or this TV, which then plays here.</string>
+    <string name="about_speaker_this_tv">Encore follows this TV. To follow another speaker, choose it on your phone. OK shows the QR code.</string>
     <string name="about_play_here_off">Music Assistant can play music on this TV too, in time with your other speakers. Once you turn it on, this TV shows up there under its own name.</string>
     <string name="about_play_here_on">This TV is one of Music Assistant’s speakers and keeps playing while Encore is closed. When music starts here, Encore shows it.</string>
     <string name="about_play_here_followed">This TV is the speaker Encore follows, so it keeps playing here. To turn it off, choose another speaker on your phone first. OK shows the QR code.</string>
+    <string name="about_play_here_followed_back">This TV is the speaker Encore follows, so it keeps playing here. Turned off, Encore follows the speaker chosen on your phone again.</string>
     <string name="about_play_here_unreachable">Music Assistant doesn’t answer on port 8927 right now, so this TV can’t play yet. Encore keeps trying.</string>
     <string name="about_play_here_too_old">To play on this TV, Music Assistant needs version 2.10.7 or later.</string>
     <string name="about_play_here_too_new">Your Music Assistant is newer than this version of Encore. Once Encore is updated, this TV plays again.</string>
@@ -360,7 +381,7 @@
     <string name="setup_error_ma_token">Please paste Music Assistant’s access token, or clear the address.</string>
     <string name="setup_error_ma_rejected">Music Assistant rejected the access token.</string>
     <string name="setup_error_ma_unreachable">Music Assistant doesn’t answer at this address. Please check it, or clear the address to go without.</string>
-    <string name="setup_error_this_tv">This TV can be the speaker only while it plays music from Music Assistant.</string>
+    <string name="setup_error_this_tv">This TV can be the speaker only with Music Assistant.</string>
     <string name="setup_error_speaker">Please choose a speaker.</string>
     <string name="setup_error_sleep">The time must be between 1 and 720 minutes.</string>
     <string name="setup_error_lights">Please pick only lights.</string>

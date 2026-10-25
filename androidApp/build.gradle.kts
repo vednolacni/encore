@@ -95,6 +95,7 @@ dependencies {
     implementation(projects.text)
     implementation(projects.ui)
     implementation(libs.androidx.activity.compose)
+    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.compose)
     implementation(libs.androidx.profileinstaller)
     implementation(libs.compose.ui)

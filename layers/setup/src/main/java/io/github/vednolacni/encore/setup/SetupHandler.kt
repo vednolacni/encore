@@ -386,11 +386,11 @@ class SetupHandler(
                 MaLink.UNREACHABLE -> return MiniHttp.Response.json(400, error(t[R.string.setup_error_ma_unreachable]))
             }
         }
-        val tvSpeaker = body.bool("tvSpeaker") ?: current.tvSpeaker
         val entity = body.string("entity")?.trim()?.takeIf { EntityId.isValid(it) || it == EntityId.THIS_TV }
             ?: return MiniHttp.Response.json(400, error(t[R.string.setup_error_speaker]))
-        // "This TV" follows the TV's own speaker, which needs Music Assistant and the TV playing for it.
-        if (entity == EntityId.THIS_TV && !(tvSpeaker && withMa.hasMusicAssistant)) return MiniHttp.Response.json(400, error(t[R.string.setup_error_this_tv]))
+        // "This TV" follows the TV's own speaker, which needs Music Assistant, and turns playing here on.
+        if (entity == EntityId.THIS_TV && !withMa.hasMusicAssistant) return MiniHttp.Response.json(400, error(t[R.string.setup_error_this_tv]))
+        val tvSpeaker = entity == EntityId.THIS_TV || (body.bool("tvSpeaker") ?: current.tvSpeaker)
         val minutes = (body["sleepMinutes"] as? JsonPrimitive)?.intOrNull ?: body.string("sleepMinutes")?.toIntOrNull()
             ?: current.sleepAfterMinutes
         if (minutes !in 1..Settings.MAX_SLEEP_MINUTES) return MiniHttp.Response.json(400, error(t[R.string.setup_error_sleep]))
@@ -424,8 +424,7 @@ class SetupHandler(
             }
             else -> return MiniHttp.Response.json(400, error(t[R.string.setup_error_values]))
         }
-        val updated = withMa.copy(
-            entityId = entity,
+        val updated = withMa.following(entity).copy(
             tvSpeaker = tvSpeaker,
             sleepAfterMinutes = minutes,
             sleepAction = action,

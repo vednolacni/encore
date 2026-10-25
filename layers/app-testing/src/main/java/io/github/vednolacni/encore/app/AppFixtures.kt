@@ -77,5 +77,5 @@ abstract class AppFixtures {
 
     /** The settings menu on its groups, the cursor on [cursor]. */
     fun menuGroups(cursor: Int = 0, t: Texts = texts) =
-        MenuState(io.github.vednolacni.encore.config.SettingsMenu.groups(t), cursor)
+        MenuState(io.github.vednolacni.encore.config.SettingsMenu.groups(io.github.vednolacni.encore.config.Settings(), io.github.vednolacni.encore.config.MenuContext(), t), cursor)
 }

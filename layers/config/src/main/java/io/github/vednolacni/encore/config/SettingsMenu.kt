@@ -8,6 +8,8 @@ import io.github.vednolacni.encore.domain.MaLink
 import io.github.vednolacni.encore.domain.MediaKind
 import io.github.vednolacni.encore.domain.SleepChoice
 import io.github.vednolacni.encore.domain.SpeakerLink
+import io.github.vednolacni.encore.domain.UpdateInfo
+import io.github.vednolacni.encore.domain.UpdateState
 import io.github.vednolacni.encore.text.AppLanguage
 import io.github.vednolacni.encore.text.R
 import io.github.vednolacni.encore.text.Texts
@@ -46,14 +48,17 @@ enum class MenuEntry(val section: MenuSection, @StringRes val label: Int) {
     SLEEP_ACTION(MenuSection.TIMER, R.string.entry_sleep_action),
     CONNECTION(MenuSection.SYSTEM, 0),
     MUSIC_ASSISTANT(MenuSection.SYSTEM, 0),
+    SPEAKER(MenuSection.SYSTEM, R.string.entry_speaker),
     PLAY_HERE(MenuSection.SYSTEM, R.string.entry_play_here),
     LANGUAGE(MenuSection.SYSTEM, R.string.entry_language),
+    UPDATE(MenuSection.SYSTEM, R.string.entry_update),
+    UPDATE_CHECK(MenuSection.SYSTEM, R.string.entry_update_check),
 }
 
 /**
  * What the menu needs to know besides the settings: the connections and the wall as they are
  * now, the sleep timer ([sleep], pausing at [sleepAt]), what kind of thing plays, the language
- * chosen, and how this TV stands as a speaker ([speaker]).
+ * chosen, how this TV stands as a speaker ([speaker]), and Encore's own new versions.
  */
 data class MenuContext(
     val link: LinkState? = null,
@@ -64,6 +69,9 @@ data class MenuContext(
     val kind: MediaKind? = null,
     val language: AppLanguage = AppLanguage.SYSTEM,
     val speaker: SpeakerLink = SpeakerLink.OFF,
+    /** The name of the speaker followed, once Home Assistant has told it. */
+    val speakerName: String? = null,
+    val update: UpdateInfo = UpdateInfo(),
 )
 
 /**
@@ -102,8 +110,11 @@ object SettingsMenu {
     /** The lines of [section]'s settings. */
     fun rows(s: Settings, ctx: MenuContext, t: Texts, section: MenuSection): List<MenuRow> = entriesOf(section).map { row(it, s, ctx, t) }
 
-    /** The menu's first level: a line for each group, saying what is in it. */
-    fun groups(t: Texts): List<MenuRow> = sections.map { MenuRow(null, t[it.title], "", t[it.about], section = it) }
+    /** The menu's first level: a line for each group, saying what is in it; System tells of a new version. */
+    fun groups(s: Settings, ctx: MenuContext, t: Texts): List<MenuRow> = sections.map {
+        val value = if (it == MenuSection.SYSTEM && s.updateCheck && ctx.update.available != null) t[R.string.update_notice] else ""
+        MenuRow(null, t[it.title], value, t[it.about], section = it)
+    }
 
     private fun row(e: MenuEntry, s: Settings, ctx: MenuContext, t: Texts) =
         MenuRow(e, label(e, t), value(e, s, ctx, t), description(e, s, ctx, t), level(e, s), dimmed = needsSetup(e, s))
@@ -114,20 +125,24 @@ object SettingsMenu {
      * setup.
      */
     fun needsSetup(e: MenuEntry, s: Settings): Boolean = when (e) {
-        MenuEntry.LYRICS, MenuEntry.PLAY_HERE -> !s.hasMusicAssistant
+        MenuEntry.LYRICS, MenuEntry.SPEAKER, MenuEntry.PLAY_HERE -> !s.hasMusicAssistant
         MenuEntry.BRIGHTNESS, MenuEntry.OFF_LIGHTS -> !s.roomLights.isSet
         MenuEntry.VALUES -> s.ownValues.isEmpty()
         else -> false
     }
 
     /**
-     * Whether Encore follows this TV's own speaker ("This TV" on the setup page): then it keeps
-     * playing here, and another speaker is chosen on the phone first.
+     * Whether Encore follows this TV's own speaker ("This TV"): then it keeps playing here, and
+     * leaving it goes back to the speaker followed before, or, without one, to the phone.
      */
     fun followsThisTv(s: Settings): Boolean = s.entityId == EntityId.THIS_TV && s.tvSpeaker
 
-    /** Whether OK on [e] opens the setup: what needs setting up first, and playing here while this TV is the speaker followed. */
-    fun opensSetup(e: MenuEntry, s: Settings): Boolean = needsSetup(e, s) || (e == MenuEntry.PLAY_HERE && followsThisTv(s))
+    /**
+     * Whether OK on [e] opens the setup: what needs setting up first, and leaving this TV while
+     * no other speaker was ever followed.
+     */
+    fun opensSetup(e: MenuEntry, s: Settings): Boolean =
+        needsSetup(e, s) || ((e == MenuEntry.SPEAKER || e == MenuEntry.PLAY_HERE) && followsThisTv(s) && s.otherSpeaker == null)
 
     /** A line's label; the two connection lines are named after what they connect to. */
     fun label(e: MenuEntry, t: Texts): String = when (e) {
@@ -216,8 +231,15 @@ object SettingsMenu {
                 else -> R.string.connecting
             },
         ]
+        MenuEntry.SPEAKER -> when {
+            !s.hasMusicAssistant -> t[R.string.needs_music_assistant]
+            s.entityId == EntityId.THIS_TV -> t[R.string.page_this_tv]
+            else -> ctx.speakerName ?: s.entityId?.substringAfter('.')?.replace('_', ' ')?.replaceFirstChar { it.uppercaseChar() } ?: t[R.string.set_up]
+        }
         MenuEntry.PLAY_HERE -> if (!s.hasMusicAssistant) t[R.string.needs_music_assistant] else onOff(s.tvSpeaker, t)
         MenuEntry.LANGUAGE -> languageValue(ctx.language, t)
+        MenuEntry.UPDATE -> updateValue(ctx.update, t)
+        MenuEntry.UPDATE_CHECK -> onOff(s.updateCheck, t)
     }
 
     fun description(e: MenuEntry, s: Settings, ctx: MenuContext, t: Texts): String = when (e) {
@@ -296,8 +318,50 @@ object SettingsMenu {
         MenuEntry.SLEEP_ACTION -> t[if (s.sleepAction == SleepAction.CLOSE) R.string.about_sleep_action_close else R.string.about_sleep_action_release]
         MenuEntry.CONNECTION -> t[if (!s.isConfigured) R.string.about_connection_set_up else R.string.about_connection]
         MenuEntry.MUSIC_ASSISTANT -> t[if (!s.hasMusicAssistant) R.string.about_ma_set_up else R.string.about_ma]
+        MenuEntry.SPEAKER -> t[
+            when {
+                !s.hasMusicAssistant -> R.string.about_play_here_set_up
+                followsThisTv(s) && s.otherSpeaker == null -> R.string.about_speaker_this_tv
+                else -> R.string.about_speaker
+            },
+        ]
         MenuEntry.PLAY_HERE -> t[playHere(s, ctx.speaker)]
         MenuEntry.LANGUAGE -> t[R.string.about_language]
+        MenuEntry.UPDATE -> updateAbout(ctx.update, t)
+        MenuEntry.UPDATE_CHECK -> t[
+            when {
+                ctx.update.installed == null -> R.string.about_update_own
+                s.updateCheck -> R.string.about_update_check_on
+                else -> R.string.about_update_check_off
+            },
+        ]
+    }
+
+    /** Where Encore stands with a new version, in a word or two. */
+    private fun updateValue(u: UpdateInfo, t: Texts): String {
+        val available = u.available
+        return when {
+            u.installed == null -> u.name.ifEmpty { t[R.string.update_unknown] }
+            u.state == UpdateState.DOWNLOADING -> t[R.string.update_downloading]
+            u.state == UpdateState.FAILED -> t[R.string.update_failed]
+            available != null -> t.format(R.string.update_version, available.removePrefix("v"))
+            u.state == UpdateState.CHECKING -> t[R.string.update_checking]
+            u.latest == null -> t[R.string.update_unknown]
+            else -> t[R.string.update_current]
+        }
+    }
+
+    /** What the Update line does now. */
+    private fun updateAbout(u: UpdateInfo, t: Texts): String {
+        val available = u.available
+        return when {
+            u.installed == null -> t[R.string.about_update_own]
+            u.state == UpdateState.DOWNLOADING -> t[R.string.about_update_downloading]
+            u.state == UpdateState.FAILED -> t[R.string.about_update_failed]
+            available != null -> t.format(R.string.about_update_available, available.removePrefix("v"))
+            u.latest == null -> t[R.string.about_update_unknown]
+            else -> t.format(R.string.about_update_current, u.name)
+        }
     }
 
     /**
@@ -315,7 +379,11 @@ object SettingsMenu {
             SpeakerLink.REFUSED -> R.string.about_play_here_refused
             SpeakerLink.NO_KEY -> R.string.about_play_here_no_key
             SpeakerLink.OFF, SpeakerLink.CONNECTING, SpeakerLink.CONNECTED ->
-                if (followsThisTv(s)) R.string.about_play_here_followed else R.string.about_play_here_on
+                when {
+                    !followsThisTv(s) -> R.string.about_play_here_on
+                    s.otherSpeaker == null -> R.string.about_play_here_followed
+                    else -> R.string.about_play_here_followed_back
+                }
         }
     }
 
@@ -359,7 +427,18 @@ object SettingsMenu {
         MenuEntry.VOLUME -> s.copy(volumeDisplay = move(VOLUME_ORDER, s.volumeDisplay, direction, wrap))
         MenuEntry.VALUES -> if (s.ownValues.isEmpty()) null else s.copy(showValues = !s.showValues)
         MenuEntry.LYRICS -> if (!s.hasMusicAssistant) null else s.copy(lyrics = !s.lyrics)
-        MenuEntry.PLAY_HERE -> if (!s.hasMusicAssistant || followsThisTv(s)) null else s.copy(tvSpeaker = !s.tvSpeaker)
+        // "This TV" turns playing here on; leaving it goes back to the speaker followed before.
+        MenuEntry.SPEAKER -> when {
+            !s.hasMusicAssistant -> null
+            s.entityId == EntityId.THIS_TV -> s.otherSpeaker?.let(s::following)
+            else -> s.following(EntityId.THIS_TV).copy(tvSpeaker = true)
+        }
+        // Turned off while this TV is followed, it goes back to the speaker followed before.
+        MenuEntry.PLAY_HERE -> when {
+            !s.hasMusicAssistant -> null
+            followsThisTv(s) -> s.otherSpeaker?.let { s.following(it).copy(tvSpeaker = false) }
+            else -> s.copy(tvSpeaker = !s.tvSpeaker)
+        }
         MenuEntry.BACKGROUND -> s.copy(background = if (s.background == BackgroundMode.COVER) BackgroundMode.WALL else BackgroundMode.COVER)
         MenuEntry.MOTION -> s.copy(motion = move(MOTION_ORDER, s.motion, direction, wrap))
         MenuEntry.BRIGHTNESS -> if (s.roomLights.isSet) s.copy(roomLightBrightness = move(BRIGHTNESS_ORDER, s.roomLightBrightness, direction, wrap)) else null
@@ -373,7 +452,9 @@ object SettingsMenu {
         MenuEntry.SLEEP_ACTION -> s.copy(
             sleepAction = if (s.sleepAction == SleepAction.CLOSE) SleepAction.RELEASE else SleepAction.CLOSE,
         )
-        MenuEntry.CONNECTION, MenuEntry.MUSIC_ASSISTANT, MenuEntry.SLEEP_TIMER, MenuEntry.LANGUAGE -> null
+        MenuEntry.UPDATE_CHECK -> s.copy(updateCheck = !s.updateCheck)
+        // OK on Update installs a new version or asks for one (MenuControl).
+        MenuEntry.CONNECTION, MenuEntry.MUSIC_ASSISTANT, MenuEntry.SLEEP_TIMER, MenuEntry.LANGUAGE, MenuEntry.UPDATE -> null
     }
 
     /** The language after one step from [language] ([direction] -1 or +1; [wrap] goes round). */

@@ -97,7 +97,8 @@ class MilkdropSound(
     }
 
     private sealed interface Event {
-        class Text(val text: String) : Event
+        /** A text message and when it arrived: a time answer counts from then, not from when the windows before it are measured. */
+        class Text(val text: String, val atUs: Long) : Event
         class Binary(val bytes: ByteString) : Event
         object Closed : Event
     }
@@ -124,7 +125,7 @@ class MilkdropSound(
                     }
 
                     override fun onMessage(webSocket: WebSocket, text: String) {
-                        events.trySend(Event.Text(text))
+                        events.trySend(Event.Text(text, nowUs()))
                     }
 
                     override fun onMessage(webSocket: WebSocket, bytes: ByteString) {
@@ -164,7 +165,7 @@ class MilkdropSound(
                                     socket.send(timeMessage())
                                 }
                                 // A burst at first, then one now and then to follow the drift.
-                                "server/time" -> nextTimeAt = nowUs() + if (time(msg) && filter.count < BURST) 0 else TIME_EVERY_US
+                                "server/time" -> nextTimeAt = nowUs() + if (time(msg, event.atUs) && filter.count < BURST) 0 else TIME_EVERY_US
                                 "stream/clear", "stream/end" -> cleared()
                                 "error" -> return heard
                             }
@@ -180,9 +181,8 @@ class MilkdropSound(
         /** The relay takes Sendspin's `client/time` as it is. */
         private fun timeMessage() = Outgoing.clientTime(nowUs()).encode()
 
-        /** A `server/time` answer taken into the clock filter; whether it was taken. */
-        private fun time(msg: JsonObject): Boolean {
-            val received = nowUs()
+        /** A `server/time` answer that arrived at [received], taken into the clock filter; whether it was taken. */
+        private fun time(msg: JsonObject, received: Long): Boolean {
             val p = msg["payload"] as? JsonObject ?: return false
             fun long(key: String) = (p[key] as? JsonPrimitive)?.longOrNull
             val sent = long("client_transmitted") ?: return false

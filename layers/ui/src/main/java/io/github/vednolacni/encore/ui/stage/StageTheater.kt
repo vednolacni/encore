@@ -17,6 +17,7 @@ import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Modifier
 import io.github.vednolacni.encore.app.StageData
 import io.github.vednolacni.encore.domain.PlayerStatus
+import io.github.vednolacni.encore.domain.TrackInfo
 import io.github.vednolacni.encore.render.ArtworkScene
 import io.github.vednolacni.encore.ui.Motion
 import io.github.vednolacni.encore.ui.RisingText
@@ -88,7 +89,11 @@ fun StageTheater(
             val newer: suspend () -> Unit = { snapshotFlow { latest.track.key }.first { it != song } }
             // Lines held by a skip that came to nothing rise the rest of the way first.
             if (song == old.track.key) text.release(newer)
-            if (target.scene === old.scene && target.track == old.track && target.lyrics === old.lyrics) return@collect
+            if (target.scene === old.scene && target.lyrics === old.lyrics && drawnAlike(target.track, old.track)) {
+                // Only what the stage doesn't draw has changed (a new link to the same picture): nothing to watch.
+                current = target
+                return@collect
+            }
             val kind = when {
                 song == old.track.key && target.scene.appearance != old.scene.appearance -> Change.WALL
                 song == old.track.key && target.scene !== old.scene -> Change.SOFT
@@ -225,6 +230,13 @@ private fun durationOf(change: Change) = when (change) {
     Change.SOFT -> Motion.SOFT_SWAP_MS
     Change.WALL -> Motion.WALL_CHANGE_MS
 }
+
+/**
+ * Whether the stage draws [a] and [b] alike: the picture comes with the scene, so a new link to
+ * it, or what only the quick settings read, changes nothing on screen.
+ */
+internal fun drawnAlike(a: TrackInfo, b: TrackInfo): Boolean =
+    a == b.copy(artworkUrl = a.artworkUrl, artworkFallbackUrl = a.artworkFallbackUrl, favorite = a.favorite, songPicture = a.songPicture, queueItemId = a.queueItemId)
 
 /** Same picture: consecutive songs of one album. */
 internal fun samePicture(a: ArtworkScene, b: ArtworkScene): Boolean =

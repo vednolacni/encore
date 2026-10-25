@@ -20,7 +20,7 @@
     <string name="about_section_lights">Lampen im Raum, die in den Farben der Musik leuchten.</string>
     <string name="about_section_remote">Was die Tasten der Fernbedienung tun.</string>
     <string name="about_section_timer">Der Sleep-Timer und wann sich Encore ausschaltet.</string>
-    <string name="about_section_system">Home Assistant, Music Assistant, die Wiedergabe hier und die Sprache.</string>
+    <string name="about_section_system">Home Assistant, Music Assistant, die Wiedergabe hier, die Sprache und Updates.</string>
 
     <string name="entry_appearance">Erscheinungsbild</string>
     <string name="entry_clock">Uhrzeit</string>
@@ -44,6 +44,16 @@
     <string name="entry_sleep_action">Beim Ausschalten</string>
     <string name="entry_language">Sprache</string>
     <string name="entry_play_here">Hier abspielen</string>
+    <string name="entry_speaker">Lautsprecher</string>
+    <string name="entry_update">Update</string>
+    <string name="entry_update_check">Nach Updates suchen</string>
+    <string name="update_notice">Neue Version</string>
+    <string name="update_current">Auf dem neuesten Stand</string>
+    <string name="update_checking">Wird geprüft</string>
+    <string name="update_unknown">Nicht geprüft</string>
+    <string name="update_version">Version %1$s</string>
+    <string name="update_downloading">Wird geladen</string>
+    <string name="update_failed">Hat nicht geklappt</string>
 
     <string name="appearance_auto">Automatisch</string>
     <string name="appearance_light">Hell</string>
@@ -133,7 +143,7 @@
     <string name="about_lights_only_on">Ausgeschaltete Lichter bleiben aus. Eines, das du einschaltest, macht mit.</string>
     <string name="about_lights_switch_on">Ausgeschaltete Lichter gehen mit der Musik an und danach wieder aus.</string>
     <string name="about_lights_on">Jedes Licht leuchtet in einer Farbe des Bildes. So hell bei Tag; abends und nachts werden sie von selbst dunkler. Nach der Musik sind sie wieder wie vorher.</string>
-    <string name="about_remote_on">OK hält die Musik an und spielt weiter, links und rechts wechseln den Titel.</string>
+    <string name="about_remote_on">OK hält die Musik an und spielt weiter, links und rechts wechseln den Titel. Gedrückt gehalten spulen sie darin.</string>
     <string name="about_remote_off">Die Fernbedienung steuert die Musik nicht; OK lange drücken öffnet weiter dieses Menü.</string>
     <string name="about_up_down_volume">Pfeil hoch und runter ändern die Lautstärke des Lautsprechers; die Schnelleinstellungen gibt es dann nicht.</string>
     <string name="about_up_down_buttons">Pfeil runter wählt die Tasten unten, noch einmal runter öffnet die Schnelleinstellungen. Zurück schließt sie.</string>
@@ -154,10 +164,21 @@
     <string name="about_ma_set_up">Freiwillig. Mit Music Assistant kommen der Songtext, das Jahr des Albums und die Kapitel von Hörbüchern. OK zeigt den QR-Code zum Einrichten.</string>
     <string name="about_ma">Damit kommen der Songtext, das Jahr des Albums und die Kapitel. OK zeigt den QR-Code. Am Handy änderst du Adresse und Token.</string>
     <string name="about_language">Die Sprache der Anzeigen und der Einrichtungsseite. Die Systemsprache ist die des Fernsehers.</string>
+    <string name="about_update_current">Encore %1$s ist die neueste Version. OK fragt noch einmal bei GitHub nach.</string>
+    <string name="about_update_unknown">Noch ist nicht bekannt, ob es eine neue Version gibt. OK fragt jetzt bei GitHub nach.</string>
+    <string name="about_update_available">Encore %1$s ist da. OK lädt es, und der Fernseher fragt, bevor er es installiert.</string>
+    <string name="about_update_check_on">Wenn Encore startet, fragt es höchstens einmal am Tag bei GitHub nach einer neuen Version.</string>
+    <string name="about_update_check_off">Encore sucht nicht von selbst nach neuen Versionen. OK bei Update fragt trotzdem bei GitHub nach.</string>
+    <string name="about_update_downloading">Die neue Version wird geladen. Danach fragt der Fernseher, ob er sie installieren soll.</string>
+    <string name="about_update_failed">Die neue Version konnte nicht geladen werden. OK versucht es noch einmal.</string>
+    <string name="about_update_own">Dieses Encore wurde aus seinem Code gebaut und sucht nicht nach neuen Versionen.</string>
     <string name="about_play_here_set_up">Mit Music Assistant kann dieser Fernseher Musik synchron mit deinen anderen Lautsprechern spielen. OK zeigt den QR-Code, um es am Handy einzurichten.</string>
+    <string name="about_speaker">Der Lautsprecher, den Encore zeigt und die Fernbedienung steuert, entweder der am Handy gewählte oder dieser Fernseher, der dann hier spielt.</string>
+    <string name="about_speaker_this_tv">Encore folgt diesem Fernseher. Um einem anderen Lautsprecher zu folgen, wähle ihn am Handy. OK zeigt den QR-Code.</string>
     <string name="about_play_here_off">Music Assistant kann auch auf diesem Fernseher Musik abspielen, synchron mit deinen anderen Lautsprechern. Schaltest du es ein, erscheint der Fernseher dort unter seinem eigenen Namen.</string>
     <string name="about_play_here_on">Dieser Fernseher ist einer der Lautsprecher von Music Assistant und spielt weiter, auch wenn Encore geschlossen ist. Beginnt hier Musik, zeigt Encore sie.</string>
     <string name="about_play_here_followed">Encore folgt diesem Fernseher, deshalb spielt er hier weiter. Um das auszuschalten, wähle zuerst am Handy einen anderen Lautsprecher. OK zeigt den QR-Code.</string>
+    <string name="about_play_here_followed_back">Encore folgt diesem Fernseher, deshalb spielt er hier weiter. Ausgeschaltet folgt Encore wieder dem Lautsprecher, den du am Handy gewählt hast.</string>
     <string name="about_play_here_unreachable">Music Assistant antwortet gerade nicht auf Port 8927, deshalb kann dieser Fernseher noch nicht spielen. Encore versucht es weiter.</string>
     <string name="about_play_here_too_old">Damit dieser Fernseher spielen kann, braucht Music Assistant die Version 2.10.7 oder neuer.</string>
     <string name="about_play_here_too_new">Dein Music Assistant ist neuer als diese Version von Encore. Sobald Encore aktualisiert ist, spielt dieser Fernseher wieder.</string>
@@ -335,7 +356,7 @@
     <string name="setup_error_ma_token">Bitte das Zugangstoken von Music Assistant einfügen oder die Adresse leeren.</string>
     <string name="setup_error_ma_rejected">Music Assistant hat das Zugangstoken abgelehnt.</string>
     <string name="setup_error_ma_unreachable">Music Assistant antwortet nicht unter dieser Adresse. Bitte prüfen oder die Adresse leeren, dann geht es ohne.</string>
-    <string name="setup_error_this_tv">Dieser Fernseher kann nur der Lautsprecher sein, während er Musik von Music Assistant abspielt.</string>
+    <string name="setup_error_this_tv">Dieser Fernseher kann nur mit Music Assistant der Lautsprecher sein.</string>
     <string name="setup_error_speaker">Bitte einen Lautsprecher auswählen.</string>
     <string name="setup_error_sleep">Die Ruhezeit muss zwischen 1 und 720 Minuten liegen.</string>
     <string name="setup_error_lights">Bitte nur Lichter wählen.</string>
