@@ -2,6 +2,7 @@ package io.github.vednolacni.encore
 
 import android.content.Intent
 import android.os.Bundle
+import android.os.SystemClock
 import android.view.KeyEvent
 import android.view.WindowManager
 import androidx.activity.ComponentActivity
@@ -40,6 +41,12 @@ class MainActivity : ComponentActivity() {
     private var view: ComposeView? = null
     private var centerLongPressed = false
     private var sideLongPressed = false
+
+    /** Left or right went down on a book or an episode: let go it jumps, held it goes by chapters. */
+    private var sideSpoken = false
+
+    /** Since when left or right has been held on a song (uptime), while it seeks. */
+    private var holdingSince: Long? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -129,12 +136,21 @@ class MainActivity : ComponentActivity() {
             KeyEvent.KEYCODE_DPAD_LEFT, KeyEvent.KEYCODE_DPAD_RIGHT -> {
                 // A held key repeats: it changes the track once, not twenty times.
                 if (event.repeatCount == 0 && onStage()) {
-                    if (controller.spokenKeys) {
-                        // A book or an episode: a press jumps (on release), a held key goes by chapters.
-                        sideLongPressed = false
+                    sideLongPressed = false
+                    holdingSince = null
+                    // A book or an episode: a press jumps (on release), a held key goes by chapters.
+                    // A song: a press changes it (on release), a held key seeks through it.
+                    sideSpoken = controller.spokenKeys
+                    if (sideSpoken || controller.holdKeys) {
                         event.startTracking()
                     } else {
                         controller.send(if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) RemoteCommand.PREVIOUS else RemoteCommand.NEXT)
+                        peek()
+                    }
+                } else if (event.repeatCount > 0) {
+                    // Each repeat while held moves the place sought on.
+                    holdingSince?.let { since ->
+                        controller.hold(if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) -1 else +1, SystemClock.uptimeMillis() - since)
                         peek()
                     }
                 }
@@ -232,7 +248,13 @@ class MainActivity : ComponentActivity() {
         }
         if ((keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) && !controller.menuOpen) {
             sideLongPressed = true
-            controller.jump(if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) -1 else +1)
+            val direction = if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) -1 else +1
+            if (sideSpoken) {
+                controller.jump(direction)
+            } else {
+                holdingSince = SystemClock.uptimeMillis()
+                controller.hold(direction, 0)
+            }
             peek()
             return true
         }
@@ -246,11 +268,18 @@ class MainActivity : ComponentActivity() {
             return true
         }
         if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT || keyCode == KeyEvent.KEYCODE_DPAD_RIGHT) {
-            // Only a press that started a jump (spoken word) acts on release.
+            // Only a press followed from its start acts on release: a jump, or another song.
             if (event.isTracking && !sideLongPressed && !event.isCanceled && onStage()) {
-                controller.skip(if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) -1 else +1)
+                if (sideSpoken) {
+                    controller.skip(if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) -1 else +1)
+                } else {
+                    controller.send(if (keyCode == KeyEvent.KEYCODE_DPAD_LEFT) RemoteCommand.PREVIOUS else RemoteCommand.NEXT)
+                }
                 peek()
             }
+            // A hold sends the place it reached.
+            if (holdingSince != null) controller.letGo()
+            holdingSince = null
             sideLongPressed = false
             return true
         }

@@ -147,7 +147,7 @@
     <string name="about_lights_only_on">Lights that are off stay off. One you switch on joins in.</string>
     <string name="about_lights_switch_on">Lights that are off go on with the music and off again after it.</string>
     <string name="about_lights_on">Each light glows in one of the picture’s colors, this bright by day. In the evening and at night they dim by themselves. After the music they are as before.</string>
-    <string name="about_remote_on">OK pauses and plays on; left and right change the track.</string>
+    <string name="about_remote_on">OK pauses and plays on; left and right change the track. Held, they seek within it.</string>
     <string name="about_remote_off">The remote does not control the music; holding OK still opens this menu.</string>
     <string name="about_up_down_volume">Arrow up and down change the speaker’s volume; the quick settings are not available then.</string>
     <string name="about_up_down_buttons">Arrow down chooses the buttons at the bottom, and down again opens the quick settings. Back closes them.</string>

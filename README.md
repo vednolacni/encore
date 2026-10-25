@@ -129,7 +129,7 @@ install there.
 | Button | Action |
 | --- | --- |
 | OK | Play or pause (hold to open the settings) |
-| Left / Right | Previous or next song |
+| Left / Right | Previous or next song (hold to seek) |
 | Down | Choose the buttons under the bar, and press again for the quick settings |
 | Up / Back | Leave the buttons or the quick settings |
 

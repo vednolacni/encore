@@ -598,7 +598,10 @@ UI words are given in English with the German in parentheses where it matters.
   only, synced only: plain words are none. Set once per song off the main thread; a frame only
   moves one canvas.
 - **Remote:** OK plays and pauses, held it opens the settings; left and right change the song
-  (spoken word: jump); down chooses among the player's buttons (left and right between them, OK
+  (spoken word: jump), held on a song they seek within it (`Seeking.hold`: 10 s of the song a
+  second at first, rising to 40 over 3 s), the bar showing the place at once and the place sent
+  as the key is let go; where a song can be sought in, a press changes it on release, else at
+  once; down chooses among the player's buttons (left and right between them, OK
   presses), down again opens the whole row of the quick settings and, pressed once more, closes
   it; up closes them, and otherwise only shows hidden parts for a moment (down does too; with
   "Up and down: Volume" both turn the speaker's volume instead); back closes what lies on top (a

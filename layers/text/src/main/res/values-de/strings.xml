@@ -133,7 +133,7 @@
     <string name="about_lights_only_on">Ausgeschaltete Lichter bleiben aus. Eines, das du einschaltest, macht mit.</string>
     <string name="about_lights_switch_on">Ausgeschaltete Lichter gehen mit der Musik an und danach wieder aus.</string>
     <string name="about_lights_on">Jedes Licht leuchtet in einer Farbe des Bildes. So hell bei Tag; abends und nachts werden sie von selbst dunkler. Nach der Musik sind sie wieder wie vorher.</string>
-    <string name="about_remote_on">OK hält die Musik an und spielt weiter, links und rechts wechseln den Titel.</string>
+    <string name="about_remote_on">OK hält die Musik an und spielt weiter, links und rechts wechseln den Titel. Gedrückt gehalten spulen sie darin.</string>
     <string name="about_remote_off">Die Fernbedienung steuert die Musik nicht; OK lange drücken öffnet weiter dieses Menü.</string>
     <string name="about_up_down_volume">Pfeil hoch und runter ändern die Lautstärke des Lautsprechers; die Schnelleinstellungen gibt es dann nicht.</string>
     <string name="about_up_down_buttons">Pfeil runter wählt die Tasten unten, noch einmal runter öffnet die Schnelleinstellungen. Zurück schließt sie.</string>
