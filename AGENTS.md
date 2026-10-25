@@ -681,7 +681,8 @@ UI words are given in English with the German in parentheses where it matters.
   Off / 10 to 100% with a slider, Lights that are off: Turn on / Leave off), Remote (Control music,
   Up and down: Buttons, menu / Volume, Audiobooks, podcasts: Jump / Change track), Timer
   (Sleep timer, Turn off after, When turning off: Close app / Screen saver), System (Home
-  Assistant, Music Assistant, Play here: On / Off, Language: System language / English / Deutsch). Label + value fit
+  Assistant, Music Assistant, Speaker: the one chosen / This TV, Play here: On / Off, Language:
+  System language / English / Deutsch). Label + value fit
   the 352 dp column on one line in both languages (`LanguageTest` measures every value).
 - **Language:** English is the default, German in `values-de`. The menu's Language line uses
   Android's per-app language (`LocaleManager` from API 33, where the choice also shows in the
@@ -807,10 +808,13 @@ UI words are given in English with the German in parentheses where it matters.
   (`OwnSpeaker` finds its entity for every user): paused it stays unless the chosen speaker
   plays, stopped it gives the screen back after 4 s (`SpeakerSwitch`); the keys, the volume, the
   queue and a button's `player` act on what shows, and another speaker's volume is no change to
-  show. "This TV" at the top of the setup page's list follows it alone (`EntityId.THIS_TV`),
-  and its own entity is left out of that list; while it does, Play here stays on (the menu's OK
-  opens the setup, where another speaker is chosen first, and a launch extra cannot switch it
-  off), and its explanation still says what keeps the TV from playing. Tested end to end against
+  show. "This TV" at the top of the setup page's list (there once Music Assistant is) follows it
+  alone (`EntityId.THIS_TV`), and its own entity is left out of that list; choosing it there, or
+  the menu's Speaker (Lautsprecher) under System, turns Play here on, and the speaker followed
+  before is kept (`Settings.otherSpeaker`). While This TV is followed, Play here stays on unless
+  there is a speaker to go back to: then turning it off, or Speaker again, follows that one, and
+  without one OK opens the setup, where another speaker is chosen first (a launch extra cannot
+  switch it off); its explanation still says what keeps the TV from playing. Tested end to end against
   aiosendspin 10.2.0, and in daily use on Klangbild's owner's TV, where it plays well.
 - **The sound feed** (`sound/`, `SoundSelection`; from Klangbild, for a visualizer it planned,
   shown nowhere yet but in the debug overlay's meter): for each short stretch, loudness, four bands and

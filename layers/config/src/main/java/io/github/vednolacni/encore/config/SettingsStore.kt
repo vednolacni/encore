@@ -46,6 +46,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         val maUrl = stringPreferencesKey("ma_url")
         val maToken = stringPreferencesKey("ma_token")
         val tvSpeaker = booleanPreferencesKey("tv_speaker")
+        val otherSpeaker = stringPreferencesKey("other_speaker")
         val background = stringPreferencesKey("background")
         val motion = stringPreferencesKey("motion")
         val lightsLeft = stringPreferencesKey("bars_left")
@@ -92,6 +93,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
             haRefreshToken = p[Keys.refreshToken]?.let(secrets::open),
             haClientId = p[Keys.clientId],
             entityId = p[Keys.entity],
+            otherSpeaker = p[Keys.otherSpeaker],
             sunEntity = p[Keys.sun] ?: defaults.sunEntity,
             sleepAfterMinutes = p[Keys.sleepMinutes] ?: defaults.sleepAfterMinutes,
             sleepAction = enumOr(p[Keys.sleepAction], defaults.sleepAction),
@@ -130,6 +132,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         putSecret(Keys.refreshToken, s.haRefreshToken)
         putOrRemove(Keys.clientId, s.haClientId)
         putOrRemove(Keys.entity, s.entityId)
+        putOrRemove(Keys.otherSpeaker, s.otherSpeaker)
         p[Keys.sun] = s.sunEntity
         p[Keys.sleepMinutes] = s.sleepAfterMinutes
         p[Keys.sleepAction] = s.sleepAction.name
