@@ -20,7 +20,7 @@
     <string name="about_section_lights">Lampen im Raum, die in den Farben der Musik leuchten.</string>
     <string name="about_section_remote">Was die Tasten der Fernbedienung tun.</string>
     <string name="about_section_timer">Der Sleep-Timer und wann sich Encore ausschaltet.</string>
-    <string name="about_section_system">Home Assistant, Music Assistant, die Wiedergabe hier und die Sprache.</string>
+    <string name="about_section_system">Home Assistant, Music Assistant, die Wiedergabe hier, die Sprache und Updates.</string>
 
     <string name="entry_appearance">Erscheinungsbild</string>
     <string name="entry_clock">Uhrzeit</string>
@@ -45,6 +45,15 @@
     <string name="entry_language">Sprache</string>
     <string name="entry_play_here">Hier abspielen</string>
     <string name="entry_speaker">Lautsprecher</string>
+    <string name="entry_update">Update</string>
+    <string name="entry_update_check">Nach Updates suchen</string>
+    <string name="update_notice">Neue Version</string>
+    <string name="update_current">Auf dem neuesten Stand</string>
+    <string name="update_checking">Wird geprüft</string>
+    <string name="update_unknown">Nicht geprüft</string>
+    <string name="update_version">Version %1$s</string>
+    <string name="update_downloading">Wird geladen</string>
+    <string name="update_failed">Hat nicht geklappt</string>
 
     <string name="appearance_auto">Automatisch</string>
     <string name="appearance_light">Hell</string>
@@ -155,6 +164,14 @@
     <string name="about_ma_set_up">Freiwillig. Mit Music Assistant kommen der Songtext, das Jahr des Albums und die Kapitel von Hörbüchern. OK zeigt den QR-Code zum Einrichten.</string>
     <string name="about_ma">Damit kommen der Songtext, das Jahr des Albums und die Kapitel. OK zeigt den QR-Code. Am Handy änderst du Adresse und Token.</string>
     <string name="about_language">Die Sprache der Anzeigen und der Einrichtungsseite. Die Systemsprache ist die des Fernsehers.</string>
+    <string name="about_update_current">Encore %1$s ist die neueste Version. OK fragt noch einmal bei GitHub nach.</string>
+    <string name="about_update_unknown">Noch ist nicht bekannt, ob es eine neue Version gibt. OK fragt jetzt bei GitHub nach.</string>
+    <string name="about_update_available">Encore %1$s ist da. OK lädt es, und der Fernseher fragt, bevor er es installiert.</string>
+    <string name="about_update_check_on">Wenn Encore startet, fragt es höchstens einmal am Tag bei GitHub nach einer neuen Version.</string>
+    <string name="about_update_check_off">Encore sucht nicht von selbst nach neuen Versionen. OK bei Update fragt trotzdem bei GitHub nach.</string>
+    <string name="about_update_downloading">Die neue Version wird geladen. Danach fragt der Fernseher, ob er sie installieren soll.</string>
+    <string name="about_update_failed">Die neue Version konnte nicht geladen werden. OK versucht es noch einmal.</string>
+    <string name="about_update_own">Dieses Encore wurde aus seinem Code gebaut und sucht nicht nach neuen Versionen.</string>
     <string name="about_play_here_set_up">Mit Music Assistant kann dieser Fernseher Musik synchron mit deinen anderen Lautsprechern spielen. OK zeigt den QR-Code, um es am Handy einzurichten.</string>
     <string name="about_speaker">Der Lautsprecher, den Encore zeigt und die Fernbedienung steuert, entweder der am Handy gewählte oder dieser Fernseher, der dann hier spielt.</string>
     <string name="about_speaker_this_tv">Encore folgt diesem Fernseher. Um einem anderen Lautsprecher zu folgen, wähle ihn am Handy. OK zeigt den QR-Code.</string>

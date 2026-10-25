@@ -39,6 +39,8 @@ import io.github.vednolacni.encore.domain.SpeakerGroup
 import io.github.vednolacni.encore.domain.SpeakerLabel
 import io.github.vednolacni.encore.domain.TimeText
 import io.github.vednolacni.encore.domain.TrackInfo
+import io.github.vednolacni.encore.domain.UpdateInfo
+import io.github.vednolacni.encore.domain.UpdateState
 import io.github.vednolacni.encore.render.StageGrid
 import io.github.vednolacni.encore.render.ScreenSpec
 import io.github.vednolacni.encore.setup.SetupInfo
@@ -137,8 +139,13 @@ class LanguageTest {
             }
             for (language in AppLanguage.entries) add(MenuContext(LinkState.CONNECTED, language = language))
             for (appearance in io.github.vednolacni.encore.color.Appearance.entries) add(MenuContext(LinkState.CONNECTED, appearance))
+            for (state in UpdateState.entries) for (latest in listOf(null, "v2026.10.5", "v2026.11.0")) {
+                add(MenuContext(LinkState.CONNECTED, update = UpdateInfo("2026.10.5", latest, state = state)))
+            }
+            add(MenuContext(LinkState.CONNECTED, update = UpdateInfo("2026.10.24 (abc1234)")))
         }
-        val out = LinkedHashSet<MenuRow>(SettingsMenu.groups(t))
+        val out = LinkedHashSet<MenuRow>(SettingsMenu.groups(Settings(), MenuContext(), t))
+        out += SettingsMenu.groups(Settings(updateCheck = true), MenuContext(update = UpdateInfo("2026.10.5", "v2026.11.0")), t)
         fun rows(settings: Settings, ctx: MenuContext) = SettingsMenu.sections.flatMap { SettingsMenu.rows(settings, ctx, t, it) }
         for (base in bases) {
             for (ctx in contexts) out += rows(base, ctx)

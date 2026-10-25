@@ -4,6 +4,7 @@ import io.github.vednolacni.encore.config.Settings
 import io.github.vednolacni.encore.data.NowPlayingSource
 import io.github.vednolacni.encore.data.RemoteCommand
 import io.github.vednolacni.encore.domain.SpeakerLink
+import io.github.vednolacni.encore.domain.UpdateInfo
 import io.github.vednolacni.encore.text.AppLanguage
 import io.github.vednolacni.encore.text.Texts
 import kotlinx.coroutines.CoroutineScope
@@ -36,6 +37,12 @@ internal interface ControllerHost {
 
     /** How this TV stands as a speaker in Music Assistant. */
     val speaker: SpeakerLink
+
+    /** What Encore knows of its own new versions. */
+    val update: UpdateInfo
+
+    /** OK on the menu's Update line: installs a new version, or asks for one now. */
+    fun update()
 
     /** Works out the screen again (takes [lock]). */
     fun recompute()

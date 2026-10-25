@@ -206,6 +206,12 @@ python3 tools/make_readme_pictures.py                          # README mockups,
   last number (`v2026.11.1`). A pre-release carries a hyphen (`v2026.11.0-beta.1`). Android
   decides about updates by `versionCode`, which only ever grows (the minutes from 2026 to the
   commit).
+- If Check for updates is on in the menu (off by default), the app asks GitHub for the newest
+  release (no beta or draft) when a screen starts showing it, at most once a day (`Updates`);
+  the System group then says New version. OK on Update asks right away, or downloads the new
+  version and hands it to Android's installer through a file provider, which asks first. It
+  downloads the release's `encore.apk`, so a release must have one. A build of one's own (a
+  version name that is no release's) looks for nothing. Not yet tried on a real TV.
 - The "Tidy up" workflow (started by hand) keeps only the newest releases, ten by default,
   deletes the tags of the releases that go (and those left behind by a release deleted on the
   website), and deletes branches merged into main. `docs/releases/` holds the notes of the
@@ -285,7 +291,9 @@ data/           NowPlayingSource, LightBridge (what the lights need from Home As
                 to Home Assistant's host, through a client without redirects; a larger rendition
                 guessed from the address gets a short try and is not asked again for a while
                 when it fails; two loads at a time; covers cached on disk), Backoff,
-                Http (cancellable OkHttp fetch with a call timeout; HttpStatusException)
+                Http (cancellable OkHttp fetch with a call timeout; HttpStatusException),
+                Releases (Encore's newest release on GitHub and its download, no credentials,
+                nothing cached)
 domain/         TrackInfo (+ pictureKey and sceneKey: a station's song by its picture too, kind,
                 chapters), PlayerSnapshot (+ SpeakerGroup, QueueInfo, speed, PlayerAbilities),
                 SpeakerLabel ("Living room + 5", "Everywhere", room names, "35%"), TrackText
@@ -302,7 +310,8 @@ domain/         TrackInfo (+ pictureKey and sceneKey: a station's song by its pi
                 knows: LinkState, MaLink, EntityState), QuickAction (+ ActionKind) and Condition (a
                 button of one's own and when it shows), OwnValue, Lyrics (Lrc: LRC read tolerantly, tidied or raw, plain words none;
                 lines with breaks; LyricsCursor: the line in the middle a little early, a small step
-                back held)
+                back held), Update (AppVersion by the calendar, UpdateInfo: what the menu's Update
+                line knows, CheckedRelease)
 text/           Texts (the words of one language: resources, plurals, numbers, percent, dates, the
                 clock in 12 or 24 hours), AppLanguage + PlatformLanguageStore (LocaleManager from
                 API 33, the app's own preference below), Localizer (StateFlow<Texts>,
@@ -345,8 +354,10 @@ app/            NowPlayingController (single source of truth → StateFlow<UiSta
                 off the main thread; another frame lets go of the builds for the one left),
                 SoundSelection (the one sound feed: this TV's own playback while the music shown
                 plays here, the MilkDrop feed for Music Assistant's other speakers, none otherwise)
+                Updates (Encore's own new versions: asked for at most once a day, installed on OK)
                 (EncoreApp/AppGraph in the root package: http, tokenHttp without redirects, localizer,
-                SpeakerHub; SpeakerService beside them)
+                SpeakerHub, the update's download and its hand-over to the installer; SpeakerService
+                beside them)
 config/         Settings (+ DisplayOptions, VolumeDisplay, Intensity, AppearanceMode, BackgroundMode,
                 MotionLevel, RoomLights, RoomLightBrightness, tvSpeaker and speakerOn), SettingsStore (DataStore, written whole
                 in one step; tokens sealed by SecretBox: AES-GCM with a key in the Android keystore;
@@ -361,7 +372,8 @@ config/         Settings (+ DisplayOptions, VolumeDisplay, Intensity, Appearance
                 condition: a state or attribute is, is not, is above or below a value; a list counts
                 its entries), OwnValues (the values in the status line as stored),
                 LaunchExtras (am start extras and encore:// links: English names and values, the
-                German ones of earlier versions still taken; `tv_speaker` an extra, never a link)
+                German ones of earlier versions still taken; `tv_speaker` an extra, never a link),
+                UpdateStore (what GitHub last said, a DataStore of its own)
 sendspin/       Sendspin, Music Assistant's protocol for synchronized audio (the spec's main, as
                 aiosendspin 10.2.0 in Music Assistant 2.10.7 speaks it): Noise (KKpsk2 over
                 BouncyCastle's lightweight X25519, ChaCha20-Poly1305, SHA-256 and HMAC; no provider
@@ -682,7 +694,7 @@ UI words are given in English with the German in parentheses where it matters.
   Up and down: Buttons, menu / Volume, Audiobooks, podcasts: Jump / Change track), Timer
   (Sleep timer, Turn off after, When turning off: Close app / Screen saver), System (Home
   Assistant, Music Assistant, Speaker: the one chosen / This TV, Play here: On / Off, Language:
-  System language / English / Deutsch). Label + value fit
+  System language / English / Deutsch, Update: OK asks or installs, Check for updates: Off / On). Label + value fit
   the 352 dp column on one line in both languages (`LanguageTest` measures every value).
 - **Language:** English is the default, German in `values-de`. The menu's Language line uses
   Android's per-app language (`LocaleManager` from API 33, where the choice also shows in the

@@ -133,6 +133,8 @@ data class Settings(
     val volumeDisplay: VolumeDisplay = VolumeDisplay.ON_CHANGE,
     /** The values of one's own show in the status line. */
     val showValues: Boolean = true,
+    /** Encore asks GitHub for a new version of itself as it starts (the menu's Check for updates). */
+    val updateCheck: Boolean = false,
     val intensity: Intensity = Intensity.NORMAL,
     /** Up and down on the remote change the speaker's volume (instead of opening the buttons and the quick settings). */
     val volumeKeys: Boolean = false,

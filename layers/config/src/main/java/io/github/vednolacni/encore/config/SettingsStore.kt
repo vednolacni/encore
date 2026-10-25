@@ -58,6 +58,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         val quickActions = stringPreferencesKey("quick_actions")
         val ownValues = stringPreferencesKey("own_values")
         val showValues = booleanPreferencesKey("show_values")
+        val updateCheck = booleanPreferencesKey("update_check")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map(::read)
@@ -120,6 +121,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
             quickActions = QuickActions.decode(p[Keys.quickActions]),
             ownValues = OwnValues.decode(p[Keys.ownValues]),
             showValues = p[Keys.showValues] ?: defaults.showValues,
+            updateCheck = p[Keys.updateCheck] ?: defaults.updateCheck,
         )
 
     private fun write(p: MutablePreferences, s: Settings) {
@@ -161,6 +163,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         putOrRemove(Keys.quickActions, s.quickActions.takeIf { it.isNotEmpty() }?.let(QuickActions::encode))
         putOrRemove(Keys.ownValues, s.ownValues.takeIf { it.isNotEmpty() }?.let(OwnValues::encode))
         p[Keys.showValues] = s.showValues
+        p[Keys.updateCheck] = s.updateCheck
     }
 
     /** The constant named [name], or [default] for none or a name this version does not know. */
