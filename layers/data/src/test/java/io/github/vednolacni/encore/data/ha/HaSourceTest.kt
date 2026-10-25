@@ -612,6 +612,47 @@ class HaSourceTest {
     }
 
     @Test
+    fun `random songs from Music Assistant's library go to the speaker through Home Assistant`() = runBlocking {
+        playerStatus = "idle"
+        val library = MockWebServer().apply {
+            dispatcher = object : Dispatcher() {
+                override fun dispatch(request: RecordedRequest): MockResponse {
+                    val command = Json.parseToJsonElement(request.body!!.utf8()).jsonObject["command"]!!.jsonPrimitive.content
+                    maCommands += command
+                    return when (command) {
+                        "music/tracks/library_items" -> MockResponse.Builder().body("""[{"uri":"library://track/7"},{"uri":"library://track/3"}]""").build()
+                        else -> MockResponse.Builder().body("[]").build()
+                    }
+                }
+            }
+            start()
+        }
+        val s = source(ma = MaClient(http, library.url("/").toString().trimEnd('/'), "ma-token"))
+        s.start()
+        withTimeout(5_000) { s.state.first { it.player != null } }
+        assertThat(s.playRandom()).isTrue()
+        val play = calls.last { it["service"]?.jsonPrimitive?.content == "play_media" }
+        assertThat(play["service"]!!.jsonPrimitive.content).isEqualTo("play_media")
+        assertThat(play["target"].toString()).isEqualTo("""{"entity_id":"media_player.wz"}""")
+        assertThat(play["service_data"].toString())
+            .isEqualTo("""{"media_id":["library://track/7","library://track/3"],"media_type":"track","enqueue":"replace"}""")
+        assertThat(maCommands).contains("music/tracks/library_items")
+        s.stop()
+        library.close()
+    }
+
+    @Test
+    fun `without Music Assistant itself no random songs are played`() = runBlocking {
+        playerStatus = "idle"
+        val s = source()
+        s.start()
+        withTimeout(5_000) { s.state.first { it.player != null } }
+        assertThat(s.playRandom()).isFalse()
+        assertThat(calls.none { it["service"]?.jsonPrimitive?.content == "play_media" }).isTrue()
+        s.stop()
+    }
+
+    @Test
     fun `without a button and without Music Assistant there are no favorites`() = runBlocking {
         val s = source()
         s.start()

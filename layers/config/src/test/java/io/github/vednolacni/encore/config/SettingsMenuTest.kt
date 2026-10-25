@@ -103,6 +103,7 @@ class SettingsMenuTest {
                 MenuEntry.LYRICS.takeIf { !s.hasMusicAssistant },
                 MenuEntry.SPEAKER.takeIf { !s.hasMusicAssistant },
                 MenuEntry.PLAY_HERE.takeIf { !s.hasMusicAssistant },
+                MenuEntry.OPEN_ACTION.takeIf { !s.hasMusicAssistant },
             )
             val actions = setOf(MenuEntry.CONNECTION, MenuEntry.MUSIC_ASSISTANT, MenuEntry.SLEEP_TIMER, MenuEntry.LANGUAGE, MenuEntry.UPDATE) + needs
             for (ctx in contexts) {
@@ -267,5 +268,21 @@ class SettingsMenuTest {
         assertThat(SettingsMenu.step(MenuEntry.SPEAKER, only, +1)).isNull()
         assertThat(SettingsMenu.opensSetup(MenuEntry.SPEAKER, only)).isTrue()
         assertThat(SettingsMenu.description(MenuEntry.SPEAKER, only, MenuContext(), en)).contains("QR")
+    }
+
+    @Test
+    fun `opening plays music or shows the clock, and needs Music Assistant`() {
+        val en = TestTexts.english()
+        assertThat(SettingsMenu.label(MenuEntry.OPEN_ACTION, en)).isEqualTo("When opening")
+        assertThat(SettingsMenu.value(MenuEntry.OPEN_ACTION, configured, MenuContext(), de)).isEqualTo(SettingsMenu.value(MenuEntry.LYRICS, configured, MenuContext(), de))
+        assertThat(SettingsMenu.step(MenuEntry.OPEN_ACTION, configured, +1)).isNull()
+        assertThat(SettingsMenu.opensSetup(MenuEntry.OPEN_ACTION, configured)).isTrue()
+        val withMa = configured.copy(maUrl = "http://192.168.1.5:8095", maToken = "t")
+        assertThat(SettingsMenu.value(MenuEntry.OPEN_ACTION, withMa, MenuContext(), en)).isEqualTo("Play music")
+        assertThat(SettingsMenu.description(MenuEntry.OPEN_ACTION, withMa, MenuContext(), en)).contains("random order")
+        val clock = SettingsMenu.step(MenuEntry.OPEN_ACTION, withMa, +1)!!
+        assertThat(clock.playOnOpen).isFalse()
+        assertThat(SettingsMenu.value(MenuEntry.OPEN_ACTION, clock, MenuContext(), en)).isEqualTo("Show the clock")
+        assertThat(SettingsMenu.step(MenuEntry.OPEN_ACTION, clock, -1, wrap = true)!!.playOnOpen).isTrue()
     }
 }

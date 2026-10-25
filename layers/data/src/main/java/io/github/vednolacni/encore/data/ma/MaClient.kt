@@ -83,6 +83,24 @@ class MaClient(private val http: OkHttpClient, val baseUrl: String, private val 
         }
     }
 
+    /**
+     * Up to [limit] songs of the library in random order (`music/tracks/library_items`), as the
+     * URIs Music Assistant plays them by. Empty when the library has none.
+     */
+    suspend fun randomTracks(limit: Int): List<String> {
+        val answer = command(
+            "music/tracks/library_items",
+            buildJsonObject {
+                put("limit", limit)
+                put("order_by", "random")
+            },
+        )
+        // A list of tracks, or (in some versions) a page with them as its items.
+        val items = answer as? JsonArray ?: (answer as? JsonObject)?.get("items") as? JsonArray
+            ?: throw IOException("Unexpected answer to music/tracks/library_items")
+        return items.mapNotNull { (it as? JsonObject)?.get("uri").string()?.takeIf(String::isNotBlank) }
+    }
+
     /** Music Assistant's own clock (`time`, its wall clock in seconds), for its queue's times. */
     suspend fun serverTime(): Double =
         (command("time", JsonObject(emptyMap())) as? JsonPrimitive)?.doubleOrNull ?: throw IOException("Unexpected answer to time")

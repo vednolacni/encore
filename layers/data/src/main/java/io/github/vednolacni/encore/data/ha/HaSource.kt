@@ -27,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
@@ -227,6 +228,31 @@ class HaSource(
 
     /** The network came back: do not wait for the backoff timer. */
     fun networkAvailable() = connection.retryNow()
+
+    /**
+     * Plays songs from Music Assistant's library in random order on the speaker shown, through
+     * Home Assistant's `music_assistant.play_media`, which finds the speaker's queue itself. Only
+     * on a Music Assistant player, and only when the library has songs.
+     */
+    override suspend fun playRandom(): Boolean {
+        val client = ma ?: return false
+        if (lastSnapshot?.isMusicAssistant != true) return false
+        val entity = speakerShown ?: return false
+        val uris = try {
+            client.randomTracks(RANDOM_TRACKS)
+        } catch (e: kotlinx.coroutines.CancellationException) {
+            throw e
+        } catch (_: Exception) {
+            return false
+        }
+        if (uris.isEmpty()) return false
+        val data = buildJsonObject {
+            put("media_id", JsonArray(uris.map(::JsonPrimitive)))
+            put("media_type", "track")
+            put("enqueue", "replace")
+        }
+        return attempt { connection.callService("music_assistant", "play_media", entity, data = data) }
+    }
 
     /** Sends [command] as the player's service, only when the player supports it. */
     override suspend fun send(command: RemoteCommand) {
@@ -451,6 +477,9 @@ class HaSource(
     companion object {
         /** Music Assistant is asked this often whether a party runs. */
         const val PARTY_MS = 60_000L
+
+        /** How many songs a random start puts in the queue: enough for a long while. */
+        const val RANDOM_TRACKS = 100
 
         /** After this many failed questions in a row, a party counts as over. */
         const val PARTY_FAILURES = 2

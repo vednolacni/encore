@@ -59,6 +59,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         val ownValues = stringPreferencesKey("own_values")
         val showValues = booleanPreferencesKey("show_values")
         val updateCheck = booleanPreferencesKey("update_check")
+        val playOnOpen = booleanPreferencesKey("play_on_open")
     }
 
     val settings: Flow<Settings> = context.dataStore.data.map(::read)
@@ -122,6 +123,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
             ownValues = OwnValues.decode(p[Keys.ownValues]),
             showValues = p[Keys.showValues] ?: defaults.showValues,
             updateCheck = p[Keys.updateCheck] ?: defaults.updateCheck,
+            playOnOpen = p[Keys.playOnOpen] ?: defaults.playOnOpen,
         )
 
     private fun write(p: MutablePreferences, s: Settings) {
@@ -164,6 +166,7 @@ class SettingsStore(private val context: Context, private val secrets: SecretBox
         putOrRemove(Keys.ownValues, s.ownValues.takeIf { it.isNotEmpty() }?.let(OwnValues::encode))
         p[Keys.showValues] = s.showValues
         p[Keys.updateCheck] = s.updateCheck
+        p[Keys.playOnOpen] = s.playOnOpen
     }
 
     /** The constant named [name], or [default] for none or a name this version does not know. */

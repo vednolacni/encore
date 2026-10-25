@@ -268,6 +268,34 @@ class NowPlayingController(
     private val setupServer: SetupServer = SetupServer(scope, setupHandler)
     private var setupJob: Job? = null
 
+    private val openPlay = OpenPlay(now)
+
+    /** The screen had gone to sleep when the last screen stopped showing the controller. */
+    private var leftAsleep = false
+
+    /**
+     * The app comes into sight (before [attach]; not the screensaver): when nothing plays once
+     * Home Assistant has told, Music Assistant plays songs at random (setting "When opening").
+     * Waking from a screen that had gone to sleep is no opening.
+     */
+    @Synchronized
+    fun opened() {
+        if (!_ui.value.asleep && !leftAsleep) openPlay.arm() else openPlay.disarm()
+        leftAsleep = false
+        // Still connected (the screensaver kept the controller going): what Home Assistant told counts now.
+        playIfOpenedIdle(_ui.value.source)
+    }
+
+    /** Starts random songs when the opening is waiting for [st] and it shows the speaker idle. */
+    private fun playIfOpenedIdle(st: SourceState) {
+        if (!openPlay.wants(st, settings.value)) return
+        val from = source ?: return
+        scope.launch {
+            val started = from.playRandom()
+            Log.i(TAG, if (started) "Opened with nothing playing: random songs" else "Opened with nothing playing: no random songs to play")
+        }
+    }
+
     /** A screen (activity or dream) starts showing the controller. */
     @Synchronized
     fun attach(spec: ScreenSpec) {
@@ -344,6 +372,8 @@ class NowPlayingController(
         sourceKey = null
         sleep.stop()
         seeking.clear()
+        leftAsleep = _ui.value.asleep
+        openPlay.disarm()
         stoppedAt = now()
         // Covers and scenes are let go once it is clear that no screen comes straight back.
         releaseJob = scope.launch {
@@ -650,6 +680,7 @@ class NowPlayingController(
         if (st.link != _ui.value.source.link) Log.i(TAG, "Link: ${st.link}")
         _ui.value = _ui.value.copy(source = st)
         soundSelection.update(st, speaker.value)
+        playIfOpenedIdle(st)
         recompute()
     }
 
