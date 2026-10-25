@@ -32,4 +32,7 @@ interface NowPlayingSource {
 
     /** The link guests open to join the party ([SourceState.party]); null when none can be had. */
     suspend fun partyUrl(): String? = null
+
+    /** Plays songs from Music Assistant's library in random order on the speaker shown; whether they went out. */
+    suspend fun playRandom(): Boolean = false
 }

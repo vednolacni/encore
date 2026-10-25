@@ -19,7 +19,7 @@
     <string name="about_section_info">Was neben dem Cover steht: die Uhrzeit, der Fortschrittsbalken, was als Nächstes kommt und der Songtext.</string>
     <string name="about_section_lights">Lampen im Raum, die in den Farben der Musik leuchten.</string>
     <string name="about_section_remote">Was die Tasten der Fernbedienung tun.</string>
-    <string name="about_section_timer">Der Sleep-Timer und wann sich Encore ausschaltet.</string>
+    <string name="about_section_timer">Der Sleep-Timer und was Encore beim Öffnen und Ausschalten tut.</string>
     <string name="about_section_system">Home Assistant, Music Assistant, die Wiedergabe hier, die Sprache und Updates.</string>
 
     <string name="entry_appearance">Erscheinungsbild</string>
@@ -42,6 +42,7 @@
     <string name="entry_sleep_timer">Sleep-Timer</string>
     <string name="entry_sleep_after">Ausschalten nach</string>
     <string name="entry_sleep_action">Beim Ausschalten</string>
+    <string name="entry_open_action">Beim Öffnen</string>
     <string name="entry_language">Sprache</string>
     <string name="entry_play_here">Hier abspielen</string>
     <string name="entry_speaker">Lautsprecher</string>
@@ -79,6 +80,8 @@
     <string name="sleep_book_end">Ende des Hörbuchs</string>
     <string name="sleep_track_end">Ende des Titels</string>
     <string name="sleep_action_close">App schließen</string>
+    <string name="open_action_play">Musik abspielen</string>
+    <string name="open_action_clock">Uhr zeigen</string>
     <string name="sleep_action_release">Bildschirmschoner</string>
     <string name="link_rejected">Zugang abgelehnt</string>
     <string name="ma_not_set_up">Nicht eingerichtet</string>
@@ -159,6 +162,9 @@
     <string name="about_sleep_after">Läuft keine Musik mehr, schaltet Encore nach dieser Zeit aus.</string>
     <string name="about_sleep_action_close">Encore schließt sich, zurück zum Startbildschirm.</string>
     <string name="about_sleep_action_release">Der Fernseher übernimmt: sein Bildschirmschoner oder Standby.</string>
+    <string name="about_open_action_play">Spielt nichts, wenn Encore geöffnet wird, spielt Music Assistant Titel aus deiner Bibliothek in zufälliger Reihenfolge.</string>
+    <string name="about_open_action_clock">Spielt nichts, wenn Encore geöffnet wird, zeigt es die Uhr, bis Musik beginnt.</string>
+    <string name="about_open_action_set_up">Mit Music Assistant kann Encore zufällige Titel abspielen, wenn es geöffnet wird und nichts spielt. OK zeigt den QR-Code, um es am Handy einzurichten.</string>
     <string name="about_connection_set_up">OK zeigt den QR-Code. Am Handy meldest du dich bei Home Assistant an und wählst den Lautsprecher.</string>
     <string name="about_connection">OK zeigt den QR-Code. Am Handy änderst du Adresse, Anmeldung und Lautsprecher.</string>
     <string name="about_ma_set_up">Freiwillig. Mit Music Assistant kommen der Songtext, das Jahr des Albums und die Kapitel von Hörbüchern. OK zeigt den QR-Code zum Einrichten.</string>

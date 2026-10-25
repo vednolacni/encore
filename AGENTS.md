@@ -273,6 +273,7 @@ data/ha/        HaAuth (long-lived token, or a sign-in: refresh token + client i
                 offer wins and holds)
 data/ma/        MaClient (Music Assistant's own API, optional: POST /api with a long-lived token;
                 `metadata/get_track_lyrics` on a client of its own with a long timeout;
+                `music/tracks/library_items`: the library's songs at random;
                 `player_queues/get`: the queue as it stands, its next item always up to date, and
                 where it stands in it; `time`: its clock; `players/all`: the player around a
                 Sendspin client),
@@ -293,7 +294,8 @@ data/           NowPlayingSource, LightBridge (what the lights need from Home As
                 when it fails; two loads at a time; covers cached on disk), Backoff,
                 Http (cancellable OkHttp fetch with a call timeout; HttpStatusException),
                 Releases (Encore's newest release on GitHub and its download, no credentials,
-                nothing cached)
+                nothing cached); NowPlayingSource.playRandom (HaSource: the library's songs at
+                random on the speaker shown)
 domain/         TrackInfo (+ pictureKey and sceneKey: a station's song by its picture too, kind,
                 chapters), PlayerSnapshot (+ SpeakerGroup, QueueInfo, speed, PlayerAbilities),
                 SpeakerLabel ("Living room + 5", "Everywhere", room names, "35%"), TrackText
@@ -354,7 +356,8 @@ app/            NowPlayingController (single source of truth → StateFlow<UiSta
                 off the main thread; another frame lets go of the builds for the one left),
                 SoundSelection (the one sound feed: this TV's own playback while the music shown
                 plays here, the MilkDrop feed for Music Assistant's other speakers, none otherwise)
-                Updates (Encore's own new versions: asked for at most once a day, installed on OK)
+                Updates (Encore's own new versions: asked for at most once a day, installed on OK),
+                OpenPlay (music as the app opens while nothing plays)
                 (EncoreApp/AppGraph in the root package: http, tokenHttp without redirects, localizer,
                 SpeakerHub, the update's download and its hand-over to the installer; SpeakerService
                 beside them)
@@ -692,7 +695,8 @@ UI words are given in English with the German in parentheses where it matters.
   bar, Next track, Album and year, Speaker group, Volume, Values, Lyrics), Lights (Brightness:
   Off / 10 to 100% with a slider, Lights that are off: Turn on / Leave off), Remote (Control music,
   Up and down: Buttons, menu / Volume, Audiobooks, podcasts: Jump / Change track), Timer
-  (Sleep timer, Turn off after, When turning off: Close app / Screen saver), System (Home
+  (Sleep timer, Turn off after, When turning off: Close app / Screen saver, When opening: Play
+  music / Show the clock), System (Home
   Assistant, Music Assistant, Speaker: the one chosen / This TV, Play here: On / Off, Language:
   System language / English / Deutsch, Update: OK asks or installs, Check for updates: Off / On). Label + value fit
   the 352 dp column on one line in both languages (`LanguageTest` measures every value).
@@ -783,6 +787,14 @@ UI words are given in English with the German in parentheses where it matters.
   running at that speed. Left and right jump back 15 / ahead 30 s (presses add up, the bar
   shows it at once), held they go by chapters; setting "Audiobooks, podcasts": Jump / Change
   track. A held key never repeats a command.
+- **Music as it opens** (`OpenPlay`; Timer: When opening (Beim Öffnen), Play music by default,
+  dimmed with "Needs Music Assistant" without it): MainActivity coming into sight arms it (not
+  the screensaver, and not a wake from a screen that had gone to sleep); once Home Assistant has
+  told how the speaker stands (within 20 s), a Music Assistant speaker that is idle or off plays
+  100 songs of the library in random order (`music/tracks/library_items` with `order_by`
+  random, played through Home Assistant's `music_assistant.play_media`, enqueue replace, on the
+  speaker shown); a song playing or paused is left as it is. It decides once per opening. Not
+  yet tried on a real TV.
 - **Sleep timer** (menu, no setting): Off / 15 / 30 / 45 minutes / one hour / End of chapter /
   End of episode (track, audiobook); the status line says "Pauses at 11:10 PM". An end counts
   only when playing reaches it (a jump across moves the timer on); the item's end is paused

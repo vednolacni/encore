@@ -46,6 +46,7 @@ enum class MenuEntry(val section: MenuSection, @StringRes val label: Int) {
     SLEEP_TIMER(MenuSection.TIMER, R.string.entry_sleep_timer),
     SLEEP_AFTER(MenuSection.TIMER, R.string.entry_sleep_after),
     SLEEP_ACTION(MenuSection.TIMER, R.string.entry_sleep_action),
+    OPEN_ACTION(MenuSection.TIMER, R.string.entry_open_action),
     CONNECTION(MenuSection.SYSTEM, 0),
     MUSIC_ASSISTANT(MenuSection.SYSTEM, 0),
     SPEAKER(MenuSection.SYSTEM, R.string.entry_speaker),
@@ -125,7 +126,7 @@ object SettingsMenu {
      * setup.
      */
     fun needsSetup(e: MenuEntry, s: Settings): Boolean = when (e) {
-        MenuEntry.LYRICS, MenuEntry.SPEAKER, MenuEntry.PLAY_HERE -> !s.hasMusicAssistant
+        MenuEntry.LYRICS, MenuEntry.SPEAKER, MenuEntry.PLAY_HERE, MenuEntry.OPEN_ACTION -> !s.hasMusicAssistant
         MenuEntry.BRIGHTNESS, MenuEntry.OFF_LIGHTS -> !s.roomLights.isSet
         MenuEntry.VALUES -> s.ownValues.isEmpty()
         else -> false
@@ -214,6 +215,10 @@ object SettingsMenu {
         MenuEntry.SLEEP_TIMER -> sleepValue(ctx.sleep, ctx.kind, t)
         MenuEntry.SLEEP_AFTER -> duration(s.sleepAfterMinutes, t)
         MenuEntry.SLEEP_ACTION -> t[if (s.sleepAction == SleepAction.CLOSE) R.string.sleep_action_close else R.string.sleep_action_release]
+        MenuEntry.OPEN_ACTION -> when {
+            !s.hasMusicAssistant -> t[R.string.needs_music_assistant]
+            else -> t[if (s.playOnOpen) R.string.open_action_play else R.string.open_action_clock]
+        }
         MenuEntry.CONNECTION -> t[
             when {
                 !s.isConfigured -> R.string.set_up
@@ -316,6 +321,13 @@ object SettingsMenu {
         }
         MenuEntry.SLEEP_AFTER -> t[R.string.about_sleep_after]
         MenuEntry.SLEEP_ACTION -> t[if (s.sleepAction == SleepAction.CLOSE) R.string.about_sleep_action_close else R.string.about_sleep_action_release]
+        MenuEntry.OPEN_ACTION -> t[
+            when {
+                !s.hasMusicAssistant -> R.string.about_open_action_set_up
+                s.playOnOpen -> R.string.about_open_action_play
+                else -> R.string.about_open_action_clock
+            },
+        ]
         MenuEntry.CONNECTION -> t[if (!s.isConfigured) R.string.about_connection_set_up else R.string.about_connection]
         MenuEntry.MUSIC_ASSISTANT -> t[if (!s.hasMusicAssistant) R.string.about_ma_set_up else R.string.about_ma]
         MenuEntry.SPEAKER -> t[
@@ -449,6 +461,7 @@ object SettingsMenu {
         MenuEntry.UP_DOWN -> s.copy(volumeKeys = !s.volumeKeys)
         MenuEntry.SPOKEN -> s.copy(spokenSkip = !s.spokenSkip)
         MenuEntry.SLEEP_AFTER -> s.copy(sleepAfterMinutes = nextSleep(s.sleepAfterMinutes, direction, wrap))
+        MenuEntry.OPEN_ACTION -> if (!s.hasMusicAssistant) null else s.copy(playOnOpen = !s.playOnOpen)
         MenuEntry.SLEEP_ACTION -> s.copy(
             sleepAction = if (s.sleepAction == SleepAction.CLOSE) SleepAction.RELEASE else SleepAction.CLOSE,
         )

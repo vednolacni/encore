@@ -85,6 +85,7 @@ class MainActivity : ComponentActivity() {
     override fun onStart() {
         super.onStart()
         val spec = ScreenSpec.of(resources.displayMetrics)
+        controller.opened()
         controller.attach(spec)
         view?.setContent {
             val ui by controller.ui.collectAsStateWithLifecycle()
